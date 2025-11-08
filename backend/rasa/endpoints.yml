@@ -1,0 +1,5 @@
+# backend/rasa/endpoints.yml
+action_endpoint:
+  url: "http://localhost:5055/webhook"
+  # If action server requires token:
+  # token: "your_action_server_token"

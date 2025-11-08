@@ -1,0 +1,39 @@
+# infra/helm/cybersathi/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "cybersathi.fullname" . | default "cybersathi-backend" }}
+  labels:
+    app: cybersathi-backend
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: cybersathi-backend
+  template:
+    metadata:
+      labels:
+        app: cybersathi-backend
+    spec:
+      containers:
+        - name: backend
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://admin:admin123@postgres:5432/cybersathi"
+            - name: JWT_SECRET
+              value: "change_me"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20

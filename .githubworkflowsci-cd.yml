@@ -1,0 +1,122 @@
+name: CyberSathi CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_BACKEND: cybersathi-backend
+  IMAGE_FRONTEND: cybersathi-frontend
+  BACKEND_DIR: backend
+  FRONTEND_DIR: frontend
+
+jobs:
+  # ================================
+  # 🔹 BACKEND BUILD & TEST
+  # ================================
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.BACKEND_DIR }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run linting
+        run: |
+          pip install flake8
+          flake8 app --count --select=E9,F63,F7,F82 --show-source --statistics
+
+      - name: Run unit tests
+        run: |
+          pytest --maxfail=1 --disable-warnings -q
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_BACKEND }}:${{ github.sha }} .
+
+  # ================================
+  # 🔹 FRONTEND BUILD & TEST
+  # ================================
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.FRONTEND_DIR }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run build
+        run: npm run build
+
+      - name: Run lint
+        run: npm run lint --if-present
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_FRONTEND }}:${{ github.sha }} .
+
+  # ================================
+  # 🔹 DEPLOYMENT JOB
+  # ================================
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.12.0
+
+      - name: Terraform Init & Apply (Infra Provision)
+        working-directory: infra/terraform
+        run: |
+          terraform init
+          terraform apply -auto-approve
+
+      - name: Helm Deploy
+        working-directory: infra/helm/cybersathi
+        run: |
+          helm upgrade --install cybersathi . \
+            --set backend.image.tag=${{ github.sha }} \
+            --set frontend.image.tag=${{ github.sha }}
+
+      - name: Notify Deployment Success
+        run: echo "🚀 CyberSathi successfully deployed!"

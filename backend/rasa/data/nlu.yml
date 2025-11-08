@@ -1,0 +1,44 @@
+# backend/rasa/data/nlu.yml
+version: "3.1"
+nlu:
+- intent: greet
+  examples: |
+    - hi
+    - hello
+    - namaste
+    - হাই
+    - ନମସ୍କାର
+
+- intent: report_fraud
+  examples: |
+    - I was scammed on UPI yesterday.
+    - Someone took my money via UPI.
+    - I clicked a phishing link and lost money.
+    - I was cheated on a job offer and paid money.
+    - mu upi re fraud hela
+    - mora bank account ru taka katigala
+
+- intent: track_case
+  examples: |
+    - check my complaint status
+    - track case REF-1234
+    - what is the status of my complaint
+    - mu mora reference id ra status dekhantu
+
+- intent: awareness_tip
+  examples: |
+    - give me cyber safety tips
+    - how can I avoid phishing
+    - tell me how to protect my UPI
+
+- intent: escalate
+  examples: |
+    - escalate this to 1930
+    - I need an urgent callback from police
+    - please connect me to an agent
+
+- intent: thanks
+  examples: |
+    - thanks
+    - thank you
+    - dhanyabad

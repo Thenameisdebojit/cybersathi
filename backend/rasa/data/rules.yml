@@ -1,0 +1,17 @@
+# backend/rasa/data/rules.yml
+version: "3.1"
+rules:
+- rule: respond to greetings
+  steps:
+  - intent: greet
+  - action: utter_greet
+
+- rule: file complaint flow
+  steps:
+  - intent: report_fraud
+  - action: utter_ask_incident
+
+- rule: ask for reference then check
+  steps:
+  - intent: track_case
+  - action: utter_ask_reference

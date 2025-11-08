@@ -1,0 +1,9 @@
+# infra/helm/cybersathi/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cybersathi-config
+data:
+  APP_ENV: "production"
+  LOG_LEVEL: "info"
+  # Add other config values here or mount secrets for sensitive data

@@ -1,0 +1,50 @@
+# infra/docker-compose.yml
+version: "3.9"
+services:
+  postgres:
+    image: postgres:15
+    container_name: cybersathi-postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: cybersathi
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: ../
+      dockerfile: backend/Dockerfile
+    container_name: cybersathi-backend
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgresql+psycopg2://admin:admin123@postgres:5432/cybersathi
+      JWT_SECRET: "devsecret"
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: cybersathi-frontend
+    ports:
+      - "5173:80"
+    restart: unless-stopped
+
+  rasa:
+    image: rasa/rasa:3.5.10
+    container_name: cybersathi-rasa
+    volumes:
+      - ../backend/rasa:/app
+    command: ["run", "--enable-api", "--cors", "*"]
+    ports:
+      - "5005:5005"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

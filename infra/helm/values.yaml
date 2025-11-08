@@ -1,0 +1,25 @@
+# infra/helm/cybersathi/values.yaml
+replicaCount: 1
+
+image:
+  repository: cybersathi/backend
+  tag: latest
+  pullPolicy: IfNotPresent
+
+frontend:
+  image: cybersathi/frontend
+  tag: latest
+  pullPolicy: IfNotPresent
+
+rasa:
+  image: rasa/rasa
+  tag: "3.5.10"
+
+service:
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: false
+  host: cybersathi.local
+  annotations: {}
