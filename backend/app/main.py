@@ -31,9 +31,9 @@ app.add_middleware(
 # Initialize database on startup
 @app.on_event("startup")
 async def startup_event():
-    logger.info("Initializing database...")
+    print("Initializing database...")
     init_db()
-    logger.info("Database initialized successfully")
+    print("Database initialized successfully")
 
 # include routers
 app.include_router(complaints.router, prefix="/api/v1/complaints", tags=["complaints"])
@@ -46,7 +46,7 @@ def health():
 
 @app.exception_handler(Exception)
 async def universal_exception_handler(request: Request, exc: Exception):
-    logger.exception("Unhandled error: %s", exc)
+    print(f"Unhandled error: {exc}")
     return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
 
 if __name__ == "__main__":
