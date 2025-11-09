@@ -7,6 +7,7 @@ import logging
 
 from app.config import Settings
 from app.routers import complaints, tracking, escalation
+from app.services.db_service import init_db
 
 settings = Settings()
 
@@ -26,6 +27,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Initialize database on startup
+@app.on_event("startup")
+async def startup_event():
+    logger.info("Initializing database...")
+    init_db()
+    logger.info("Database initialized successfully")
 
 # include routers
 app.include_router(complaints.router, prefix="/api/v1/complaints", tags=["complaints"])
