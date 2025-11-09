@@ -5,7 +5,7 @@ from typing import Optional
 class Settings(BaseSettings):
     DEBUG: bool = True
     PORT: int = 8000
-    FRONTEND_URL: str = "http://localhost:5173"
+    FRONTEND_URL: str = "http://localhost:5000"
 
     # Database: default sqlite for quick local dev
     DATABASE_URL: str = "sqlite:///./cybersathi.db"

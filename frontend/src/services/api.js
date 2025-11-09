@@ -1,6 +1,17 @@
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const getApiUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  if (typeof window !== 'undefined' && window.location.hostname.includes('replit.dev')) {
+    const replitDomain = window.location.hostname;
+    return `https://${replitDomain}:8000`;
+  }
+  return "http://localhost:8000";
+};
+
+const API_URL = getApiUrl();
 
 const api = axios.create({
   baseURL: API_URL,

@@ -50,4 +50,4 @@ async def universal_exception_handler(request: Request, exc: Exception):
     return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
 
 if __name__ == "__main__":
-    uvicorn.run("app.main:app", host="0.0.0.0", port=settings.PORT, reload=settings.DEBUG)
+    uvicorn.run("app.main:app", host="127.0.0.1", port=settings.PORT, reload=settings.DEBUG)
