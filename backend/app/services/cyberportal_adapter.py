@@ -20,15 +20,13 @@ import json
 import time
 import requests
 from typing import Dict, Any, Optional
-from app.config import Settings
-
-settings = Settings()
+from app.config import settings
 
 
 # ============ CONFIG ============
 
-CYBERPORTAL_BASE = settings.CYBERPORTAL_API_URL
-CYBERPORTAL_KEY = settings.CYBERPORTAL_API_KEY
+CYBERPORTAL_BASE = settings.NCRP_API_URL
+CYBERPORTAL_KEY = settings.NCRP_API_KEY
 MOCK_MODE = settings.DEBUG or not CYBERPORTAL_KEY  # mock if no real API key
 
 

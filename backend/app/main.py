@@ -5,11 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 import logging
 
-from app.config import Settings
-from app.routers import complaints, tracking, escalation
+from app.config import settings
+from app.routers import complaints, tracking, escalation, whatsapp_webhook
 from app.services.db_service import init_db
-
-settings = Settings()
 
 logger = logging.getLogger("uvicorn.access")
 
@@ -39,6 +37,7 @@ async def startup_event():
 app.include_router(complaints.router, prefix="/api/v1/complaints", tags=["complaints"])
 app.include_router(tracking.router, prefix="/api/v1/tracking", tags=["tracking"])
 app.include_router(escalation.router, prefix="/api/v1/escalation", tags=["escalation"])
+app.include_router(whatsapp_webhook.router, prefix="", tags=["whatsapp"])
 
 @app.get("/health", tags=["health"])
 def health():
@@ -50,4 +49,4 @@ async def universal_exception_handler(request: Request, exc: Exception):
     return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
 
 if __name__ == "__main__":
-    uvicorn.run("app.main:app", host="127.0.0.1", port=settings.PORT, reload=settings.DEBUG)
+    uvicorn.run("app.main:app", host="0.0.0.0", port=settings.PORT, reload=settings.DEBUG)
