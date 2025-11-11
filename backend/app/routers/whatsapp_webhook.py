@@ -13,12 +13,15 @@ logger = logging.getLogger(__name__)
 
 
 def verify_webhook_signature(payload: bytes, signature: Optional[str]) -> bool:
-    if not signature or settings.DEBUG:
-        return True
+    if not signature:
+        logger.warning("No signature provided in webhook request")
+        return False
     
     try:
+        app_secret = getattr(settings, 'META_APP_SECRET', settings.META_ACCESS_TOKEN)
+        
         expected_signature = hmac.new(
-            settings.META_ACCESS_TOKEN.encode(),
+            app_secret.encode(),
             payload,
             hashlib.sha256
         ).hexdigest()
@@ -28,7 +31,12 @@ def verify_webhook_signature(payload: bytes, signature: Optional[str]) -> bool:
             return False
         
         provided_signature = signature_parts[1]
-        return hmac.compare_digest(expected_signature, provided_signature)
+        is_valid = hmac.compare_digest(expected_signature, provided_signature)
+        
+        if not is_valid:
+            logger.warning("Webhook signature verification failed")
+        
+        return is_valid
     except Exception as e:
         logger.error(f"Signature verification error: {e}")
         return False

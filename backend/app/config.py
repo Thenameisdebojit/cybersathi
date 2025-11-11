@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     
     META_VERIFY_TOKEN: str = "cybersathi_verify_token_dev"
     META_ACCESS_TOKEN: str = "test_access_token"
+    META_APP_SECRET: str = "test_app_secret"
     META_PHONE_NUMBER_ID: str = "test_phone_id"
     META_BUSINESS_ACCOUNT_ID: str = "test_business_id"
     WHATSAPP_API_VERSION: str = "v18.0"

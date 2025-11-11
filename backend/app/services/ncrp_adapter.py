@@ -1,4 +1,5 @@
-import requests
+import httpx
+import asyncio
 import time
 import logging
 from typing import Dict, Optional
@@ -11,16 +12,16 @@ logger = logging.getLogger(__name__)
 def retry_with_backoff(max_retries=3, backoff_factor=2):
     def decorator(func):
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        async def wrapper(*args, **kwargs):
             for attempt in range(max_retries):
                 try:
-                    return func(*args, **kwargs)
-                except requests.exceptions.RequestException as e:
+                    return await func(*args, **kwargs)
+                except httpx.HTTPError as e:
                     if attempt == max_retries - 1:
                         raise
                     wait_time = backoff_factor ** attempt
                     logger.warning(f"Retry {attempt + 1}/{max_retries} after {wait_time}s: {e}")
-                    time.sleep(wait_time)
+                    await asyncio.sleep(wait_time)
             return None
         return wrapper
     return decorator
@@ -51,7 +52,7 @@ class NCRPAdapter:
         return self._refresh_access_token()
     
     @retry_with_backoff(max_retries=3)
-    def _refresh_access_token(self) -> str:
+    async def _refresh_access_token(self) -> str:
         token_url = f"{self.base_url}/oauth/token"
         payload = {
             "grant_type": "client_credentials",
@@ -60,15 +61,16 @@ class NCRPAdapter:
         }
         
         try:
-            response = requests.post(token_url, json=payload, timeout=10)
-            response.raise_for_status()
-            
-            data = response.json()
-            self._access_token = data.get("access_token", "mock_token")
-            self._token_expiry = time.time() + data.get("expires_in", 3600)
-            
-            logger.info("NCRP access token refreshed")
-            return self._access_token
+            async with httpx.AsyncClient() as client:
+                response = await client.post(token_url, json=payload, timeout=10.0)
+                response.raise_for_status()
+                
+                data = response.json()
+                self._access_token = data.get("access_token", "mock_token")
+                self._token_expiry = time.time() + data.get("expires_in", 3600)
+                
+                logger.info("NCRP access token refreshed")
+                return self._access_token
         except Exception as e:
             logger.warning(f"Token refresh failed (using mock): {e}")
             self._access_token = "mock_access_token"
@@ -80,7 +82,7 @@ class NCRPAdapter:
         return str(uuid.uuid4())
     
     @retry_with_backoff(max_retries=3)
-    def submit_complaint(self, complaint_data: Dict) -> Dict:
+    async def submit_complaint(self, complaint_data: Dict) -> Dict:
         endpoint = f"{self.base_url}/complaints"
         
         payload = {
@@ -96,21 +98,22 @@ class NCRPAdapter:
         }
         
         try:
-            response = requests.post(
-                endpoint,
-                json=payload,
-                headers=self._get_headers(),
-                timeout=15
-            )
-            response.raise_for_status()
-            
-            result = response.json()
-            complaint_id = result.get("complaint_id") or result.get("reference_id")
-            
-            self.cache[complaint_id] = result
-            
-            logger.info(f"Complaint submitted to NCRP: {complaint_id}")
-            return result
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    endpoint,
+                    json=payload,
+                    headers=self._get_headers(),
+                    timeout=15.0
+                )
+                response.raise_for_status()
+                
+                result = response.json()
+                complaint_id = result.get("complaint_id") or result.get("reference_id")
+                
+                self.cache[complaint_id] = result
+                
+                logger.info(f"Complaint submitted to NCRP: {complaint_id}")
+                return result
         except Exception as e:
             logger.error(f"NCRP submission error: {e}")
             
@@ -125,7 +128,7 @@ class NCRPAdapter:
             }
     
     @retry_with_backoff(max_retries=3)
-    def get_complaint_status(self, complaint_id: str) -> Dict:
+    async def get_complaint_status(self, complaint_id: str) -> Dict:
         if complaint_id in self.cache:
             cached = self.cache[complaint_id].copy()
             cached["cached"] = True
@@ -134,17 +137,18 @@ class NCRPAdapter:
         endpoint = f"{self.base_url}/complaints/{complaint_id}"
         
         try:
-            response = requests.get(
-                endpoint,
-                headers=self._get_headers(),
-                timeout=10
-            )
-            response.raise_for_status()
-            
-            result = response.json()
-            self.cache[complaint_id] = result
-            
-            return result
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    endpoint,
+                    headers=self._get_headers(),
+                    timeout=10.0
+                )
+                response.raise_for_status()
+                
+                result = response.json()
+                self.cache[complaint_id] = result
+                
+                return result
         except Exception as e:
             logger.error(f"NCRP status check error: {e}")
             
@@ -156,23 +160,24 @@ class NCRPAdapter:
             }
     
     @retry_with_backoff(max_retries=3)
-    def update_complaint(self, complaint_id: str, update_data: Dict) -> Dict:
+    async def update_complaint(self, complaint_id: str, update_data: Dict) -> Dict:
         endpoint = f"{self.base_url}/complaints/{complaint_id}"
         
         try:
-            response = requests.patch(
-                endpoint,
-                json=update_data,
-                headers=self._get_headers(),
-                timeout=10
-            )
-            response.raise_for_status()
-            
-            result = response.json()
-            self.cache[complaint_id] = result
-            
-            logger.info(f"Complaint updated in NCRP: {complaint_id}")
-            return result
+            async with httpx.AsyncClient() as client:
+                response = await client.patch(
+                    endpoint,
+                    json=update_data,
+                    headers=self._get_headers(),
+                    timeout=10.0
+                )
+                response.raise_for_status()
+                
+                result = response.json()
+                self.cache[complaint_id] = result
+                
+                logger.info(f"Complaint updated in NCRP: {complaint_id}")
+                return result
         except Exception as e:
             logger.error(f"NCRP update error: {e}")
             

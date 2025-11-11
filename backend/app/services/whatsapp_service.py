@@ -1,4 +1,4 @@
-import requests
+import httpx
 import logging
 from typing import List, Dict, Optional
 from app.config import settings
@@ -35,15 +35,16 @@ class WhatsAppService:
             }
         
         try:
-            response = requests.post(
-                self.base_url,
-                headers=headers,
-                json=payload,
-                timeout=10
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    self.base_url,
+                    headers=headers,
+                    json=payload,
+                    timeout=10.0
+                )
+                response.raise_for_status()
+                return response.json()
+        except httpx.HTTPError as e:
             logger.error(f"WhatsApp API error: {e}")
             return {"error": str(e)}
     
@@ -128,15 +129,16 @@ class WhatsAppService:
             ]
         
         try:
-            response = requests.post(
-                self.base_url,
-                headers=headers,
-                json=payload,
-                timeout=10
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    self.base_url,
+                    headers=headers,
+                    json=payload,
+                    timeout=10.0
+                )
+                response.raise_for_status()
+                return response.json()
+        except httpx.HTTPError as e:
             logger.error(f"WhatsApp template API error: {e}")
             return {"error": str(e)}
 
