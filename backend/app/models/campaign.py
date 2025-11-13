@@ -1,13 +1,11 @@
 # backend/app/models/campaign.py
 """Campaign models for awareness and notification campaigns."""
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict
 from enum import Enum
 
-from sqlalchemy import Column, String, DateTime, Integer, Enum as SQLEnum, JSON, Text
+from beanie import Document
 from pydantic import BaseModel, Field
-
-from app.models.base import Base
 
 
 class CampaignType(str, Enum):
@@ -30,17 +28,17 @@ class CampaignStatus(str, Enum):
 class CampaignTarget(BaseModel):
     """Target audience for campaign."""
     all_users: bool = False
-    language: Optional[str] = None  # en, od, hi
+    language: Optional[str] = None
     districts: List[str] = Field(default_factory=list)
     phone_numbers: List[str] = Field(default_factory=list)
-    user_segments: List[str] = Field(default_factory=list)  # recent_reporters, active_users
+    user_segments: List[str] = Field(default_factory=list)
 
 
 class CampaignMessage(BaseModel):
     """Campaign message content."""
     text: str
     media_url: Optional[str] = None
-    media_type: Optional[str] = None  # image, video, document
+    media_type: Optional[str] = None
     template_name: Optional[str] = None
     quick_replies: List[str] = Field(default_factory=list)
 
@@ -55,36 +53,36 @@ class CampaignStats(BaseModel):
     replied: int = 0
 
 
-class Campaign(Base):
-    """SQLAlchemy model for campaigns."""
-    __tablename__ = "campaigns"
+class CampaignDocument(Document):
+    """MongoDB document model for campaigns."""
     
-    id = Column(Integer, primary_key=True, index=True)
+    title: str
+    description: Optional[str] = None
+    campaign_type: CampaignType
     
-    # Basic Info
-    title = Column(String, nullable=False)
-    description = Column(Text)
-    campaign_type = Column(SQLEnum(CampaignType), nullable=False)
+    messages: Dict[str, CampaignMessage]
     
-    # Content (stored as JSONB)
-    messages = Column(JSON, nullable=False)  # language code -> message dict
+    target: CampaignTarget
     
-    # Targeting (stored as JSONB)
-    target = Column(JSON, nullable=False)
+    status: CampaignStatus = Field(default=CampaignStatus.DRAFT)
+    scheduled_at: Optional[datetime] = None
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
     
-    # Scheduling
-    status = Column(SQLEnum(CampaignStatus), default=CampaignStatus.DRAFT, index=True)
-    scheduled_at = Column(DateTime, index=True)
-    started_at = Column(DateTime)
-    completed_at = Column(DateTime)
+    stats: CampaignStats = Field(default_factory=CampaignStats)
     
-    # Statistics (stored as JSONB)
-    stats = Column(JSON, default=dict)
+    created_by: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
     
-    # Metadata
-    created_by = Column(String, nullable=False)  # User ID
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    class Settings:
+        name = "campaigns"
+        indexes = [
+            "status",
+            "created_at",
+            "scheduled_at",
+            [("status", 1), ("scheduled_at", 1)],
+        ]
 
 
 class CampaignCreate(BaseModel):
@@ -108,7 +106,3 @@ class CampaignResponse(BaseModel):
     created_at: datetime
     
     model_config = {"from_attributes": True}
-
-
-# Keep old name for backwards compatibility
-CampaignDocument = Campaign

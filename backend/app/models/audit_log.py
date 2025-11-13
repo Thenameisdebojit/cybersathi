@@ -4,22 +4,18 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 from enum import Enum
 
-from sqlalchemy import Column, String, DateTime, Integer, Boolean, Enum as SQLEnum, JSON, Text
+from beanie import Document
 from pydantic import Field
-
-from app.models.base import Base
 
 
 class AuditAction(str, Enum):
     """Types of auditable actions."""
-    # User actions
     USER_LOGIN = "user_login"
     USER_LOGOUT = "user_logout"
     USER_CREATED = "user_created"
     USER_UPDATED = "user_updated"
     USER_DELETED = "user_deleted"
     
-    # Complaint actions
     COMPLAINT_CREATED = "complaint_created"
     COMPLAINT_VIEWED = "complaint_viewed"
     COMPLAINT_UPDATED = "complaint_updated"
@@ -27,51 +23,77 @@ class AuditAction(str, Enum):
     COMPLAINT_ASSIGNED = "complaint_assigned"
     COMPLAINT_ESCALATED = "complaint_escalated"
     
-    # System actions
     NCRP_SUBMISSION = "ncrp_submission"
     WHATSAPP_MESSAGE_SENT = "whatsapp_message_sent"
     WHATSAPP_MESSAGE_RECEIVED = "whatsapp_message_received"
     FILE_UPLOADED = "file_uploaded"
     CAMPAIGN_SENT = "campaign_sent"
     
-    # Security events
     LOGIN_FAILED = "login_failed"
     PASSWORD_CHANGED = "password_changed"
     UNAUTHORIZED_ACCESS = "unauthorized_access"
 
 
-class AuditLog(Base):
-    """SQLAlchemy model for audit logs."""
-    __tablename__ = "audit_logs"
+class AuditLogDocument(Document):
+    """MongoDB document model for audit logs."""
     
-    id = Column(Integer, primary_key=True, index=True)
+    user_id: Optional[str] = None
+    user_email: Optional[str] = None
+    user_role: Optional[str] = None
     
-    # Who
-    user_id = Column(String, index=True)
-    user_email = Column(String)
-    user_role = Column(String)
+    action: AuditAction
+    resource_type: str
+    resource_id: Optional[str] = None
     
-    # What
-    action = Column(SQLEnum(AuditAction), nullable=False, index=True)
-    resource_type = Column(String, nullable=False)  # complaint, user, campaign, etc.
-    resource_id = Column(String, index=True)
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
     
-    # When
-    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
     
-    # Where
-    ip_address = Column(String)
-    user_agent = Column(String)
+    description: Optional[str] = None
+    changes: Optional[Dict[str, Any]] = None
+    metadata: Optional[Dict[str, Any]] = None
     
-    # Details
-    description = Column(Text)
-    changes = Column(JSON)  # Before/after values
-    metadata = Column(JSON)
+    success: bool = True
+    error_message: Optional[str] = None
     
-    # Status
-    success = Column(Boolean, default=True)
-    error_message = Column(Text)
-
-
-# Keep old name for backwards compatibility
-AuditLogDocument = AuditLog
+    class Settings:
+        name = "audit_logs"
+        indexes = [
+            "user_id",
+            "action",
+            "timestamp",
+            "resource_id",
+            [("user_id", 1), ("timestamp", -1)],
+            [("action", 1), ("timestamp", -1)],
+        ]
+    
+    @classmethod
+    async def log(
+        cls,
+        action: AuditAction,
+        resource_type: str,
+        user_id: Optional[str] = None,
+        user_email: Optional[str] = None,
+        resource_id: Optional[str] = None,
+        description: Optional[str] = None,
+        changes: Optional[Dict[str, Any]] = None,
+        ip_address: Optional[str] = None,
+        success: bool = True,
+        error_message: Optional[str] = None,
+    ):
+        """Create an audit log entry."""
+        log_entry = cls(
+            user_id=user_id,
+            user_email=user_email,
+            action=action,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            description=description,
+            changes=changes,
+            ip_address=ip_address,
+            success=success,
+            error_message=error_message,
+        )
+        await log_entry.insert()
+        return log_entry

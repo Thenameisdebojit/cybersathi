@@ -9,10 +9,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 
 from app.config import settings
-from app.database import db, get_async_session
+from app.database import db
 from app.routers import auth, complaints, tracking, escalation, whatsapp_webhook, analytics
-from app.services.auth_service import AuthService
-from app.models.user import User, UserRole, UserStatus
+from app.services.auth import AuthService
+from app.models.user import UserDocument, UserRole, UserStatus
 
 # Configure logging
 logging.basicConfig(
@@ -29,9 +29,9 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 Starting CyberSathi Backend...")
     
     try:
-        # Connect to MongoDB
+        # Connect to MongoDB Atlas
         await db.connect_db()
-        logger.info("✅ MongoDB connected successfully")
+        logger.info("✅ MongoDB Atlas connected successfully")
         
         # Create default admin user if not exists
         await create_default_admin()

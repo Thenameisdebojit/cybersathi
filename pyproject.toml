@@ -24,6 +24,7 @@ dependencies = [
     "mongomock-motor>=0.0.36",
     "motor>=3.7.1",
     "numpy>=2.3.4",
+    "openai==0.28.1",
     "pandas>=2.3.3",
     "passlib>=1.7.4",
     "prometheus-client>=0.23.1",

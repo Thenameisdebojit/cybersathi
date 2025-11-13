@@ -4,10 +4,8 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 from enum import Enum
 
-from sqlalchemy import Column, String, DateTime, Integer, Float, Enum as SQLEnum, JSON
+from beanie import Document
 from pydantic import BaseModel, Field
-
-from app.models.base import Base
 
 
 class EventType(str, Enum):
@@ -21,33 +19,62 @@ class EventType(str, Enum):
     API_CALL = "api_call"
 
 
-class AnalyticsEvent(Base):
-    """SQLAlchemy model for analytics events."""
-    __tablename__ = "analytics_events"
+class AnalyticsEventDocument(Document):
+    """MongoDB document model for analytics events."""
     
-    id = Column(Integer, primary_key=True, index=True)
+    event_type: EventType
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
     
-    event_type = Column(SQLEnum(EventType), nullable=False, index=True)
-    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    user_id: Optional[str] = None
+    complaint_id: Optional[str] = None
+    campaign_id: Optional[str] = None
     
-    # Context
-    user_id = Column(String)
-    complaint_id = Column(String)
-    campaign_id = Column(String)
+    language: Optional[str] = None
+    district: Optional[str] = None
+    state: Optional[str] = None
+    incident_type: Optional[str] = None
+    source: Optional[str] = None
     
-    # Dimensions
-    language = Column(String)
-    district = Column(String, index=True)
-    state = Column(String)
-    incident_type = Column(String, index=True)
-    source = Column(String)  # whatsapp, web, api
+    value: Optional[float] = None
+    duration: Optional[int] = None
     
-    # Metrics
-    value = Column(Float)  # For numerical metrics like amount
-    duration = Column(Integer)  # Duration in seconds
+    metadata: Optional[Dict[str, Any]] = None
     
-    # Additional data (stored as JSONB)
-    metadata = Column(JSON)
+    class Settings:
+        name = "analytics_events"
+        indexes = [
+            "event_type",
+            "timestamp",
+            [("event_type", 1), ("timestamp", -1)],
+            [("district", 1), ("timestamp", -1)],
+            [("incident_type", 1), ("timestamp", -1)],
+        ]
+    
+    @classmethod
+    async def track(
+        cls,
+        event_type: EventType,
+        user_id: Optional[str] = None,
+        complaint_id: Optional[str] = None,
+        language: Optional[str] = None,
+        district: Optional[str] = None,
+        incident_type: Optional[str] = None,
+        value: Optional[float] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ):
+        """Track an analytics event."""
+        event = cls(
+            event_type=event_type,
+            user_id=user_id,
+            complaint_id=complaint_id,
+            language=language,
+            district=district,
+            incident_type=incident_type,
+            value=value,
+            metadata=metadata,
+        )
+        await event.insert()
+        return event
 
 
 class AnalyticsSummary(BaseModel):
@@ -55,12 +82,8 @@ class AnalyticsSummary(BaseModel):
     total_complaints: int = 0
     complaints_today: int = 0
     resolved_complaints: int = 0
-    avg_resolution_time: float = 0.0  # in hours
+    avg_resolution_time: float = 0.0
     language_distribution: Dict[str, int] = Field(default_factory=dict)
     incident_type_distribution: Dict[str, int] = Field(default_factory=dict)
     district_distribution: Dict[str, int] = Field(default_factory=dict)
-    trend_data: list = Field(default_factory=list)  # Time series data
-
-
-# Keep old name for backwards compatibility
-AnalyticsEventDocument = AnalyticsEvent
+    trend_data: list = Field(default_factory=list)

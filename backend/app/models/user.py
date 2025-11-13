@@ -4,10 +4,8 @@ from datetime import datetime
 from typing import Optional
 from enum import Enum
 
-from sqlalchemy import Column, String, DateTime, Integer, Boolean, Enum as SQLEnum, JSON
+from beanie import Document
 from pydantic import BaseModel, EmailStr, Field
-
-from app.models.base import Base
 
 
 class UserRole(str, Enum):
@@ -30,12 +28,12 @@ class UserStatus(str, Enum):
 class UserCreate(BaseModel):
     """Schema for creating a new user."""
     email: EmailStr
-    phone: Optional[str] = None  # Optional for OAuth
-    password: Optional[str] = Field(None, min_length=8)  # Optional for OAuth
+    phone: Optional[str] = None
+    password: Optional[str] = Field(None, min_length=8)
     full_name: str
     role: UserRole = UserRole.VIEWER
     department: Optional[str] = None
-    provider: Optional[str] = "local"  # 'local', 'google'
+    provider: Optional[str] = "local"
     provider_id: Optional[str] = None
     profile_picture: Optional[str] = None
 
@@ -55,48 +53,42 @@ class UserUpdate(BaseModel):
     department: Optional[str] = None
 
 
-class User(Base):
-    """SQLAlchemy model for users."""
-    __tablename__ = "users"
+class UserDocument(Document):
+    """MongoDB document model for users."""
     
-    id = Column(Integer, primary_key=True, index=True)
+    email: EmailStr
+    phone: Optional[str] = None
+    hashed_password: Optional[str] = None
     
-    # Authentication
-    email = Column(String, unique=True, nullable=False, index=True)
-    phone = Column(String, index=True)
-    hashed_password = Column(String)
+    provider: Optional[str] = None
+    provider_id: Optional[str] = None
+    profile_picture: Optional[str] = None
     
-    # OAuth Fields
-    provider = Column(String)  # 'local', 'google'
-    provider_id = Column(String)
-    profile_picture = Column(String)
+    full_name: str
+    department: Optional[str] = None
     
-    # Profile
-    full_name = Column(String, nullable=False)
-    department = Column(String)
+    role: UserRole = Field(default=UserRole.VIEWER)
+    status: UserStatus = UserStatus.ACTIVE
+    permissions: list[str] = Field(default_factory=list)
     
-    # Authorization
-    role = Column(SQLEnum(UserRole), default=UserRole.VIEWER, index=True)
-    status = Column(SQLEnum(UserStatus), default=UserStatus.ACTIVE, index=True)
-    permissions = Column(JSON, default=list)
+    last_login: Optional[datetime] = None
+    failed_login_attempts: int = 0
+    locked_until: Optional[datetime] = None
     
-    # Session
-    last_login = Column(DateTime)
-    failed_login_attempts = Column(Integer, default=0)
-    locked_until = Column(DateTime)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
     
-    # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by: Optional[str] = None
     
-    # Metadata
-    created_by = Column(String)
+    class Settings:
+        name = "users"
+        indexes = ["email", "phone", "role", "status"]
     
     def has_permission(self, permission: str) -> bool:
         """Check if user has specific permission."""
         if self.role == UserRole.SUPER_ADMIN:
             return True
-        return permission in (self.permissions or [])
+        return permission in self.permissions
     
     def is_admin(self) -> bool:
         """Check if user is admin or super admin."""
@@ -109,8 +101,8 @@ class User(Base):
             "email": self.email,
             "phone": self.phone,
             "full_name": self.full_name,
-            "role": self.role.value if isinstance(self.role, UserRole) else self.role,
-            "status": self.status.value if isinstance(self.status, UserStatus) else self.status,
+            "role": self.role,
+            "status": self.status,
             "department": self.department,
             "last_login": self.last_login,
             "created_at": self.created_at,
@@ -143,7 +135,3 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     expires_in: int
     user: UserResponse
-
-
-# Keep old names for backwards compatibility
-UserDocument = User

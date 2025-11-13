@@ -1,14 +1,12 @@
 # backend/app/models/complaint.py
-"""Complaint models for PostgreSQL using SQLAlchemy ORM."""
+"""Complaint models for MongoDB using Beanie ODM."""
 from datetime import datetime
 from typing import Optional, List
 from enum import Enum
 import uuid
 
-from sqlalchemy import Column, String, DateTime, Integer, Float, Enum as SQLEnum, JSON, Text
+from beanie import Document
 from pydantic import BaseModel, Field, field_validator
-
-from app.models.base import Base
 
 
 class IncidentType(str, Enum):
@@ -41,7 +39,7 @@ class Attachment(BaseModel):
     """File attachment metadata."""
     filename: str
     file_type: str
-    file_size: int  # in bytes
+    file_size: int
     url: str
     uploaded_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -50,7 +48,7 @@ class StatusHistory(BaseModel):
     """Status change tracking."""
     status: ComplaintStatus
     changed_at: datetime = Field(default_factory=datetime.utcnow)
-    changed_by: Optional[str] = None  # user_id
+    changed_by: Optional[str] = None
     notes: Optional[str] = None
 
 
@@ -73,7 +71,7 @@ class ComplaintCreate(BaseModel):
     description: str = Field(..., min_length=10, max_length=2000)
     date_of_incident: Optional[datetime] = None
     amount: Optional[float] = Field(None, ge=0)
-    platform: Optional[str] = None  # UPI app, website, social media platform
+    platform: Optional[str] = None
     txn_id: Optional[str] = None
     bank_account: Optional[str] = None
     suspect_info: Optional[str] = None
@@ -85,7 +83,7 @@ class ComplaintCreate(BaseModel):
     def validate_phone(cls, v: str) -> str:
         """Validate phone number format."""
         if not v.startswith('+'):
-            v = '+91' + v  # Default to India
+            v = '+91' + v
         return v
 
 
@@ -97,65 +95,66 @@ class ComplaintUpdate(BaseModel):
     notes: Optional[str] = None
 
 
-class Complaint(Base):
-    """SQLAlchemy model for complaints."""
-    __tablename__ = "complaints"
+class ComplaintDocument(Document):
+    """MongoDB document model for complaints."""
     
-    id = Column(Integer, primary_key=True, index=True)
-    reference_id = Column(String, unique=True, index=True, default=lambda: f"CYB{uuid.uuid4().hex[:10].upper()}")
+    reference_id: str = Field(default_factory=lambda: f"CYB{uuid.uuid4().hex[:10].upper()}")
     
-    # Complainant Info (encrypted in production)
-    name = Column(String)
-    phone = Column(String, nullable=False, index=True)
-    email = Column(String)
-    language = Column(String, default="en")
+    name: Optional[str] = None
+    phone: str
+    email: Optional[str] = None
+    language: str = "en"
     
-    # Incident Details
-    incident_type = Column(SQLEnum(IncidentType), nullable=False)
-    description = Column(Text, nullable=False)
-    date_of_incident = Column(DateTime)
-    amount = Column(Float)
-    platform = Column(String)
-    txn_id = Column(String)
-    bank_account = Column(String)
-    suspect_info = Column(Text)
-    location = Column(JSON)  # Stored as JSONB
+    incident_type: IncidentType
+    description: str
+    date_of_incident: Optional[datetime] = None
+    amount: Optional[float] = None
+    platform: Optional[str] = None
+    txn_id: Optional[str] = None
+    bank_account: Optional[str] = None
+    suspect_info: Optional[str] = None
+    location: Optional[Location] = None
     
-    # Attachments (stored as JSONB array)
-    attachments = Column(JSON, default=list)
+    attachments: List[Attachment] = Field(default_factory=list)
     
-    # Status Tracking
-    status = Column(SQLEnum(ComplaintStatus), default=ComplaintStatus.REGISTERED, index=True)
-    status_history = Column(JSON, default=list)  # Stored as JSONB array
+    status: ComplaintStatus = Field(default=ComplaintStatus.REGISTERED)
+    status_history: List[StatusHistory] = Field(default_factory=list)
     
-    # Integration
-    portal_case_id = Column(String)  # NCRP case ID
-    ncrp_submitted_at = Column(DateTime)
+    portal_case_id: Optional[str] = None
+    ncrp_submitted_at: Optional[datetime] = None
     
-    # Assignment
-    assignee = Column(String)  # User ID of assigned admin
+    assignee: Optional[str] = None
     
-    # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
     
-    # Metadata
-    source = Column(String, default="whatsapp")  # whatsapp, web, api
-    ip_address = Column(String)
-    user_agent = Column(String)
+    source: str = "whatsapp"
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
     
-    def update_status_sync(self, new_status: ComplaintStatus, changed_by: Optional[str] = None, notes: Optional[str] = None):
-        """Update complaint status and track history (sync method for use within session)."""
+    class Settings:
+        name = "complaints"
+        indexes = [
+            "reference_id",
+            "phone",
+            "status",
+            "created_at",
+            [("phone", 1), ("created_at", -1)],
+            [("status", 1), ("created_at", -1)],
+        ]
+    
+    async def update_status(self, new_status: ComplaintStatus, changed_by: Optional[str] = None, notes: Optional[str] = None):
+        """Update complaint status and track history."""
         self.status = new_status
-        history = self.status_history or []
-        history.append({
-            "status": new_status.value,
-            "changed_at": datetime.utcnow().isoformat(),
-            "changed_by": changed_by,
-            "notes": notes
-        })
-        self.status_history = history
+        self.status_history.append(
+            StatusHistory(
+                status=new_status,
+                changed_by=changed_by,
+                notes=notes
+            )
+        )
         self.updated_at = datetime.utcnow()
+        await self.save()
     
     def to_dict(self) -> dict:
         """Convert to dictionary for API responses."""
@@ -166,17 +165,17 @@ class Complaint(Base):
             "phone": self.phone,
             "email": self.email,
             "language": self.language,
-            "incident_type": self.incident_type.value if isinstance(self.incident_type, IncidentType) else self.incident_type,
+            "incident_type": self.incident_type,
             "description": self.description,
             "date_of_incident": self.date_of_incident,
             "amount": self.amount,
             "platform": self.platform,
             "txn_id": self.txn_id,
-            "status": self.status.value if isinstance(self.status, ComplaintStatus) else self.status,
+            "status": self.status,
             "portal_case_id": self.portal_case_id,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
-            "attachments": self.attachments or [],
+            "attachments": [att.dict() for att in self.attachments],
         }
 
 
@@ -194,7 +193,3 @@ class ComplaintResponse(BaseModel):
     updated_at: datetime
     
     model_config = {"from_attributes": True}
-
-
-# Keep old name for backwards compatibility
-ComplaintDocument = Complaint

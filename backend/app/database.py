@@ -1,90 +1,67 @@
 # backend/app/database.py
-"""PostgreSQL database connection and initialization using SQLAlchemy."""
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import declarative_base
-from typing import AsyncGenerator
+"""MongoDB database connection and initialization."""
+from motor.motor_asyncio import AsyncIOMotorClient
+from beanie import init_beanie
+from typing import Optional
 import logging
 import os
 
 from app.config import settings
-from app.models.base import Base
+from app.models.complaint import ComplaintDocument
+from app.models.user import UserDocument
+from app.models.audit_log import AuditLogDocument
+from app.models.campaign import CampaignDocument
+from app.models.analytics import AnalyticsEventDocument
 
 logger = logging.getLogger(__name__)
 
 
 class Database:
-    """PostgreSQL database connection manager."""
+    """MongoDB database connection manager."""
     
-    engine = None
-    async_session_maker = None
+    client: Optional[AsyncIOMotorClient] = None
     
     @classmethod
     async def connect_db(cls):
-        """Initialize PostgreSQL connection."""
+        """Initialize MongoDB connection and Beanie ODM."""
         try:
-            # Get DATABASE_URL from environment
-            database_url = os.getenv("DATABASE_URL")
-            if not database_url:
-                raise ValueError("DATABASE_URL environment variable not set")
+            # Get MongoDB URL from environment (Replit secret)
+            mongodb_url = os.getenv("MONGODB_URL") or settings.MONGODB_URL
             
-            # Convert postgres:// to postgresql+asyncpg:// for async support
-            if database_url.startswith("postgres://"):
-                database_url = database_url.replace("postgres://", "postgresql+asyncpg://", 1)
-            elif database_url.startswith("postgresql://"):
-                database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+            logger.info(f"Connecting to MongoDB Atlas...")
             
-            logger.info(f"Connecting to PostgreSQL database")
-            
-            cls.engine = create_async_engine(
-                database_url,
-                echo=settings.DEBUG,
-                future=True,
+            cls.client = AsyncIOMotorClient(
+                mongodb_url,
+                minPoolSize=settings.MONGODB_MIN_POOL_SIZE,
+                maxPoolSize=settings.MONGODB_MAX_POOL_SIZE,
             )
             
-            cls.async_session_maker = async_sessionmaker(
-                cls.engine,
-                class_=AsyncSession,
-                expire_on_commit=False,
+            # Initialize Beanie with document models
+            await init_beanie(
+                database=cls.client[settings.MONGODB_DB_NAME],
+                document_models=[
+                    ComplaintDocument,
+                    UserDocument,
+                    AuditLogDocument,
+                    CampaignDocument,
+                    AnalyticsEventDocument,
+                ]
             )
             
-            # Create all tables
-            async with cls.engine.begin() as conn:
-                await conn.run_sync(Base.metadata.create_all)
-            
-            logger.info("✅ PostgreSQL connection established successfully")
-            logger.info("✅ Database tables created/verified")
+            logger.info("✅ MongoDB connection established successfully")
+            logger.info("ℹ️  Indexes are managed by Beanie via model Settings")
             
         except Exception as e:
-            logger.error(f"❌ Failed to connect to PostgreSQL: {e}")
+            logger.error(f"❌ Failed to connect to MongoDB: {e}")
             raise
     
     @classmethod
     async def close_db(cls):
-        """Close PostgreSQL connection."""
-        if cls.engine:
-            await cls.engine.dispose()
-            logger.info("PostgreSQL connection closed")
-    
-    @classmethod
-    async def get_session(cls) -> AsyncGenerator[AsyncSession, None]:
-        """Get database session for dependency injection."""
-        async with cls.async_session_maker() as session:
-            try:
-                yield session
-                await session.commit()
-            except Exception:
-                await session.rollback()
-                raise
-            finally:
-                await session.close()
+        """Close MongoDB connection."""
+        if cls.client:
+            cls.client.close()
+            logger.info("MongoDB connection closed")
 
 
 # Singleton instance
 db = Database()
-
-
-# Dependency for FastAPI
-async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
-    """FastAPI dependency to get async database session."""
-    async for session in db.get_session():
-        yield session
