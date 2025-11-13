@@ -1,11 +1,17 @@
 # backend/app/routers/auth.py
 """Authentication router for user login, registration, and profile management."""
+from typing import Optional
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.responses import RedirectResponse
 from datetime import timedelta, datetime
-from google.oauth2 import id_token
-from google.auth.transport import requests
 import httpx
+
+try:
+    from google.oauth2 import id_token
+    from google.auth.transport import requests as google_requests
+    GOOGLE_AUTH_AVAILABLE = True
+except ImportError:
+    GOOGLE_AUTH_AVAILABLE = False
 
 from app.models.user import (
     UserCreate, UserLogin, UserResponse, TokenResponse, 
@@ -168,8 +174,8 @@ async def logout(current_user: UserDocument = Depends(get_current_user)):
 
 @router.put("/me", response_model=UserResponse)
 async def update_profile(
-    full_name: str = None,
-    phone: str = None,
+    full_name: Optional[str] = None,
+    phone: Optional[str] = None,
     current_user: UserDocument = Depends(get_current_user)
 ):
     """
@@ -244,6 +250,12 @@ async def google_login():
     """
     Redirect to Google OAuth login page.
     """
+    if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_REDIRECT_URI:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Google OAuth is not configured. Please add GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REDIRECT_URI to backend/.env"
+        )
+    
     google_auth_url = (
         f"https://accounts.google.com/o/oauth2/v2/auth?"
         f"client_id={settings.GOOGLE_CLIENT_ID}&"
@@ -286,9 +298,15 @@ async def google_callback(code: str):
             id_token_str = tokens.get("id_token")
             
             # Verify and decode ID token
+            if not GOOGLE_AUTH_AVAILABLE:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Google authentication libraries not available"
+                )
+            
             idinfo = id_token.verify_oauth2_token(
                 id_token_str, 
-                requests.Request(), 
+                google_requests.Request(), 
                 settings.GOOGLE_CLIENT_ID
             )
             
@@ -329,7 +347,7 @@ async def google_callback(code: str):
                 await user.insert()
                 
                 await AuditLogDocument.log(
-                    action=AuditAction.USER_REGISTERED,
+                    action=AuditAction.USER_CREATED,
                     resource_type="user",
                     user_id=str(user.id),
                     user_email=user.email,

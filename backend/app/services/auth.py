@@ -149,40 +149,54 @@ class AuthService:
         created_by: Optional[str] = None,
     ) -> UserDocument:
         """Create a new user."""
-        # Check if user already exists
-        existing_user = await UserDocument.find_one(UserDocument.email == email)
-        if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User with this email already exists"
+        try:
+            # Check if user already exists
+            existing_user = await UserDocument.find_one(UserDocument.email == email)
+            if existing_user:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="User with this email already exists"
+                )
+            
+            # Hash password
+            hashed_password = AuthService.hash_password(password)
+            
+            # Create user
+            user = UserDocument(
+                email=email,
+                phone=phone,
+                hashed_password=hashed_password,
+                full_name=full_name,
+                role=role,
+                department=department,
+                created_by=created_by,
             )
-        
-        # Hash password
-        hashed_password = AuthService.hash_password(password)
-        
-        # Create user
-        user = UserDocument(
-            email=email,
-            phone=phone,
-            hashed_password=hashed_password,
-            full_name=full_name,
-            role=role,
-            department=department,
-            created_by=created_by,
-        )
-        
-        await user.insert()
-        
-        # Log user creation
-        await AuditLogDocument.log(
-            action=AuditAction.USER_CREATED,
-            resource_type="user",
-            user_id=created_by,
-            resource_id=str(user.id),
-            description=f"Created user: {email}",
-        )
-        
-        return user
+            
+            await user.insert()
+            
+            # Log user creation
+            await AuditLogDocument.log(
+                action=AuditAction.USER_CREATED,
+                resource_type="user",
+                user_id=created_by,
+                resource_id=str(user.id),
+                description=f"Created user: {email}",
+            )
+            
+            return user
+        except HTTPException:
+            raise
+        except Exception as e:
+            error_msg = str(e)
+            if "ServerSelectionTimeoutError" in error_msg or "Connection" in error_msg:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Database is not connected. Please configure MongoDB Atlas connection string in backend/.env (MONGODB_URL). Get free MongoDB Atlas at: https://www.mongodb.com/cloud/atlas"
+                )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to create user: {error_msg}"
+            )
 
 
 async def get_current_user(
