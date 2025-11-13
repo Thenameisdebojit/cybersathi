@@ -5,27 +5,21 @@
       "src": "frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "frontend/dist"
+        "distDir": "dist"
       }
     }
   ],
   "routes": [
+    {
+      "handle": "filesystem"
+    },
     {
       "src": "/api/(.*)",
       "dest": "https://your-backend-url.replit.dev/api/$1"
     },
     {
       "src": "/(.*)",
-      "dest": "/frontend/$1"
+      "dest": "/index.html"
     }
-  ],
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ],
-  "env": {
-    "VITE_API_URL": "https://your-backend-url.replit.dev"
-  }
+  ]
 }

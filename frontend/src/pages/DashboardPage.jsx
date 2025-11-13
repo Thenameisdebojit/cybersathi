@@ -41,15 +41,15 @@ export default function DashboardPage() {
   };
 
   const StatCard = ({ icon: Icon, title, value, color, subtitle }) => (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-xl shadow-soft border border-gray-100 p-6 hover:shadow-medium transition-all duration-200 animate-fade-in">
       <div className="flex items-center">
-        <div className={`p-3 rounded-lg ${color}`}>
+        <div className={`p-3 rounded-xl shadow-sm ${color}`}>
           <Icon className="h-6 w-6 text-white" />
         </div>
         <div className="ml-4">
           <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
-          {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
+          <p className="text-3xl font-bold text-gray-900">{value}</p>
+          {subtitle && <p className="text-xs text-gray-500 mt-1 font-medium">{subtitle}</p>}
         </div>
       </div>
     </div>
@@ -57,13 +57,13 @@ export default function DashboardPage() {
 
   const getStatusBadge = (status) => {
     const styles = {
-      registered: 'bg-blue-100 text-blue-800',
-      under_review: 'bg-yellow-100 text-yellow-800',
-      resolved: 'bg-green-100 text-green-800',
-      closed: 'bg-gray-100 text-gray-800'
+      registered: 'badge badge-info',
+      under_review: 'badge badge-warning',
+      resolved: 'badge badge-success',
+      closed: 'badge bg-gray-100 text-gray-700'
     };
     return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${styles[status] || styles.registered}`}>
+      <span className={`${styles[status] || styles.registered}`}>
         {status?.replace('_', ' ').toUpperCase()}
       </span>
     );
@@ -89,7 +89,7 @@ export default function DashboardPage() {
           icon={Users} 
           title="Total Complaints" 
           value={stats.total} 
-          color="bg-primary-600"
+          color="gradient-primary"
           subtitle="All time"
         />
         <StatCard 
@@ -103,20 +103,20 @@ export default function DashboardPage() {
           icon={CheckCircle} 
           title="Resolved" 
           value={stats.resolved} 
-          color="bg-green-500"
+          color="gradient-success"
           subtitle="Successfully closed"
         />
         <StatCard 
           icon={TrendingUp} 
           title="This Week" 
           value={stats.thisWeek} 
-          color="bg-purple-500"
+          color="bg-primary-500"
           subtitle="Last 7 days"
         />
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
+      <div className="bg-white rounded-xl shadow-soft border border-gray-100 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-primary-50/50 to-white">
           <h2 className="text-lg font-semibold text-gray-900">Recent Complaints</h2>
         </div>
         <div className="overflow-x-auto">

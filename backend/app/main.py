@@ -28,26 +28,33 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("🚀 Starting CyberSathi Backend...")
     
+    db_connected = False
     try:
-        # Connect to MongoDB Atlas
+        # Try to connect to MongoDB Atlas
         await db.connect_db()
         logger.info("✅ MongoDB Atlas connected successfully")
+        db_connected = True
         
         # Create default admin user if not exists
         await create_default_admin()
         
-        logger.info(f"🌟 CyberSathi v{settings.APP_VERSION} is ready!")
-        logger.info(f"📊 API Docs: http://{settings.HOST}:{settings.PORT}/docs")
-        
     except Exception as e:
-        logger.error(f"❌ Startup failed: {e}")
-        raise
+        logger.warning(f"⚠️  MongoDB connection failed: {e}")
+        logger.warning("⚠️  Starting in limited mode - database features unavailable")
+        logger.warning("ℹ️  Please configure MONGODB_URL in backend/.env with your MongoDB Atlas connection string")
+        logger.warning("ℹ️  Get free MongoDB Atlas at: https://www.mongodb.com/cloud/atlas")
+    
+    logger.info(f"🌟 CyberSathi v{settings.APP_VERSION} is ready!")
+    logger.info(f"📊 API Docs: http://{settings.HOST}:{settings.PORT}/docs")
+    if not db_connected:
+        logger.info("⚠️  Database: DISCONNECTED (configure MongoDB Atlas to enable)")
     
     yield
     
     # Shutdown
     logger.info("🛑 Shutting down CyberSathi Backend...")
-    await db.close_db()
+    if db_connected:
+        await db.close_db()
     logger.info("✅ Cleanup completed")
 
 

@@ -1,5 +1,6 @@
 import os
-from typing import Optional
+from typing import Optional, List
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 
@@ -101,15 +102,23 @@ class Settings(BaseSettings):
     
     # File Upload
     MAX_UPLOAD_SIZE_MB: int = 10
-    ALLOWED_EXTENSIONS: list = ["jpg", "jpeg", "png", "pdf", "doc", "docx"]
     UPLOAD_DIR: str = "./uploads"
+    ALLOWED_EXTENSIONS_STR: str = Field(default="jpg,jpeg,png,pdf,doc,docx", validation_alias="ALLOWED_EXTENSIONS")
+    CORS_ORIGINS_STR: str = Field(default="http://localhost:5173,http://localhost:5000,http://localhost:3000", validation_alias="CORS_ORIGINS")
     
     # Data Retention
     DATA_RETENTION_DAYS: int = 365
     AUDIT_LOG_RETENTION_DAYS: int = 730
     
-    # CORS
-    CORS_ORIGINS: list = ["http://localhost:5173", "http://localhost:5000", "http://localhost:3000"]
+    @property
+    def ALLOWED_EXTENSIONS(self) -> List[str]:
+        """Get allowed file extensions as a list from comma-separated string."""
+        return [ext.strip() for ext in self.ALLOWED_EXTENSIONS_STR.split(',')]
+    
+    @property
+    def CORS_ORIGINS(self) -> List[str]:
+        """Get CORS origins as a list from comma-separated string."""
+        return [origin.strip() for origin in self.CORS_ORIGINS_STR.split(',')]
     
     @property
     def mongodb_connection_string(self) -> str:
