@@ -1,7 +1,7 @@
 # Core Framework
 fastapi==0.109.0
 uvicorn[standard]==0.27.0
-pydantic==2.5.0
+pydantic>=2.5.2
 pydantic-settings==2.1.0
 python-dotenv==1.0.0
 python-multipart==0.0.6
@@ -13,9 +13,8 @@ pymongo==4.6.1
 beanie==1.24.0
 
 # Caching & Queue
-redis==5.0.1
+redis<5.0.0,>=4.5.2
 aioredis==2.0.1
-celery==5.3.4
 celery[redis]==5.3.4
 
 # External API Integration
