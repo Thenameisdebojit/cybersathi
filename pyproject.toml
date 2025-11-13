@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     "aiohttp>=3.13.2",
     "aioredis>=2.0.1",
+    "alembic>=1.17.1",
     "apscheduler>=3.11.1",
     "authlib>=1.6.5",
     "bcrypt>=5.0.0",
@@ -25,6 +26,7 @@ dependencies = [
     "pandas>=2.3.3",
     "passlib>=1.7.4",
     "prometheus-client>=0.23.1",
+    "psycopg2-binary>=2.9.11",
     "pydantic>=2.12.4",
     "pydantic-extra-types>=2.10.6",
     "pydantic-settings>=2.12.0",
@@ -42,6 +44,7 @@ dependencies = [
     "requests>=2.32.5",
     "rich>=14.2.0",
     "sentry-sdk[fastapi]>=2.44.0",
+    "sqlalchemy>=2.0.44",
     "typer>=0.20.0",
     "uvicorn[standard]>=0.38.0",
 ]
