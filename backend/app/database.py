@@ -45,9 +45,7 @@ class Database:
             )
             
             logger.info("✅ MongoDB connection established successfully")
-            
-            # Create indexes
-            await cls.create_indexes()
+            logger.info("ℹ️  Indexes are managed by Beanie via model Settings")
             
         except Exception as e:
             logger.error(f"❌ Failed to connect to MongoDB: {e}")
@@ -59,44 +57,6 @@ class Database:
         if cls.client:
             cls.client.close()
             logger.info("MongoDB connection closed")
-    
-    @classmethod
-    async def create_indexes(cls):
-        """Create database indexes for performance."""
-        try:
-            db = cls.client[settings.MONGODB_DB_NAME]
-            
-            # Complaints indexes
-            complaints = db.complaints
-            await complaints.create_index("reference_id", unique=True)
-            await complaints.create_index("phone")
-            await complaints.create_index("status")
-            await complaints.create_index("created_at")
-            await complaints.create_index([("phone", 1), ("created_at", -1)])
-            
-            # Users indexes
-            users = db.users
-            await users.create_index("email", unique=True)
-            await users.create_index("phone")
-            await users.create_index("role")
-            
-            # Audit logs indexes
-            audit_logs = db.audit_logs
-            await audit_logs.create_index("user_id")
-            await audit_logs.create_index("action")
-            await audit_logs.create_index("timestamp")
-            await audit_logs.create_index([("user_id", 1), ("timestamp", -1)])
-            
-            # Analytics indexes
-            analytics = db.analytics_events
-            await analytics.create_index("event_type")
-            await analytics.create_index("timestamp")
-            await analytics.create_index([("event_type", 1), ("timestamp", -1)])
-            
-            logger.info("✅ Database indexes created successfully")
-            
-        except Exception as e:
-            logger.warning(f"Index creation warning: {e}")
 
 
 # Singleton instance

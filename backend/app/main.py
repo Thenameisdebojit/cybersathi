@@ -58,10 +58,13 @@ async def create_default_admin():
         admin = await UserDocument.find_one(UserDocument.email == settings.ADMIN_EMAIL)
         
         if not admin:
+            # Truncate password to 72 bytes for bcrypt compatibility
+            admin_password = settings.ADMIN_PASSWORD[:72]
+            
             # Create admin user
             admin = await AuthService.create_user(
                 email=settings.ADMIN_EMAIL,
-                password=settings.ADMIN_PASSWORD,
+                password=admin_password,
                 full_name="System Administrator",
                 phone=settings.ADMIN_PHONE,
                 role=UserRole.SUPER_ADMIN,
