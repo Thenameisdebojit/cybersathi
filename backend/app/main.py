@@ -1,52 +1,148 @@
 # backend/app/main.py
+"""FastAPI application with MongoDB, authentication, and WhatsApp integration."""
 import uvicorn
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
-import logging
 
 from app.config import settings
-from app.routers import complaints, tracking, escalation, whatsapp_webhook
-from app.services.db_service import init_db
+from app.database import db
+from app.routers import auth, complaints, tracking, escalation, whatsapp_webhook, analytics
+from app.services.auth import AuthService
+from app.models.user import UserDocument, UserRole, UserStatus
 
-logger = logging.getLogger("uvicorn.access")
+# Configure logging
+logging.basicConfig(
+    level=getattr(logging, settings.LOG_LEVEL),
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan manager for startup and shutdown."""
+    # Startup
+    logger.info("🚀 Starting CyberSathi Backend...")
+    
+    try:
+        # Connect to MongoDB
+        await db.connect_db()
+        logger.info("✅ MongoDB connected successfully")
+        
+        # Create default admin user if not exists
+        await create_default_admin()
+        
+        logger.info(f"🌟 CyberSathi v{settings.APP_VERSION} is ready!")
+        logger.info(f"📊 API Docs: http://{settings.HOST}:{settings.PORT}/docs")
+        
+    except Exception as e:
+        logger.error(f"❌ Startup failed: {e}")
+        raise
+    
+    yield
+    
+    # Shutdown
+    logger.info("🛑 Shutting down CyberSathi Backend...")
+    await db.close_db()
+    logger.info("✅ Cleanup completed")
+
+
+async def create_default_admin():
+    """Create default admin user from environment variables."""
+    try:
+        # Check if admin exists
+        admin = await UserDocument.find_one(UserDocument.email == settings.ADMIN_EMAIL)
+        
+        if not admin:
+            # Create admin user
+            admin = await AuthService.create_user(
+                email=settings.ADMIN_EMAIL,
+                password=settings.ADMIN_PASSWORD,
+                full_name="System Administrator",
+                phone=settings.ADMIN_PHONE,
+                role=UserRole.SUPER_ADMIN,
+                department="IT & Security",
+            )
+            logger.info(f"✅ Default admin created: {settings.ADMIN_EMAIL}")
+        else:
+            logger.info(f"ℹ️  Admin user already exists: {settings.ADMIN_EMAIL}")
+            
+    except Exception as e:
+        logger.warning(f"⚠️  Could not create default admin: {e}")
+
+
+# Create FastAPI application
 app = FastAPI(
-    title="CyberSathi Backend",
-    version="0.1.0",
-    description="Backend API for CyberSathi (WhatsApp chatbot for Cybercrime Helpline 1930)."
+    title=settings.APP_NAME,
+    version=settings.APP_VERSION,
+    description="Production-ready WhatsApp chatbot for India's Cybercrime Helpline (1930)",
+    lifespan=lifespan,
+    docs_url="/docs" if settings.DEBUG else None,
+    redoc_url="/redoc" if settings.DEBUG else None,
 )
 
-# CORS
+# CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if settings.DEBUG else [settings.FRONTEND_URL],
+    allow_origins=settings.CORS_ORIGINS if not settings.DEBUG else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Initialize database on startup
-@app.on_event("startup")
-async def startup_event():
-    print("Initializing database...")
-    init_db()
-    print("Database initialized successfully")
+# Include routers
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
+app.include_router(complaints.router, prefix="/api/v1/complaints", tags=["Complaints"])
+app.include_router(tracking.router, prefix="/api/v1/tracking", tags=["Tracking"])
+app.include_router(escalation.router, prefix="/api/v1/escalation", tags=["Escalation"])
+app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["Analytics"])
+app.include_router(whatsapp_webhook.router, prefix="", tags=["WhatsApp"])
 
-# include routers
-app.include_router(complaints.router, prefix="/api/v1/complaints", tags=["complaints"])
-app.include_router(tracking.router, prefix="/api/v1/tracking", tags=["tracking"])
-app.include_router(escalation.router, prefix="/api/v1/escalation", tags=["escalation"])
-app.include_router(whatsapp_webhook.router, prefix="", tags=["whatsapp"])
 
-@app.get("/health", tags=["health"])
-def health():
-    return {"status": "ok", "service": "CyberSathi Backend"}
+@app.get("/health", tags=["Health"])
+async def health_check():
+    """Health check endpoint for monitoring."""
+    return {
+        "status": "healthy",
+        "service": settings.APP_NAME,
+        "version": settings.APP_VERSION,
+        "environment": settings.ENVIRONMENT,
+    }
+
+
+@app.get("/", tags=["Root"])
+async def root():
+    """Root endpoint with basic info."""
+    return {
+        "message": "Welcome to CyberSathi API",
+        "version": settings.APP_VERSION,
+        "docs": f"http://{settings.HOST}:{settings.PORT}/docs" if settings.DEBUG else "Contact admin",
+    }
+
 
 @app.exception_handler(Exception)
 async def universal_exception_handler(request: Request, exc: Exception):
-    print(f"Unhandled error: {exc}")
-    return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
+    """Global exception handler."""
+    logger.error(f"Unhandled exception: {exc}", exc_info=True)
+    
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Internal server error",
+            "message": str(exc) if settings.DEBUG else "An error occurred"
+        }
+    )
+
 
 if __name__ == "__main__":
-    uvicorn.run("app.main:app", host="0.0.0.0", port=settings.PORT, reload=settings.DEBUG)
+    uvicorn.run(
+        "app.main:app",
+        host=settings.HOST,
+        port=settings.PORT,
+        reload=settings.DEBUG,
+        log_level=settings.LOG_LEVEL.lower()
+    )

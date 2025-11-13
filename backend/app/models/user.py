@@ -1,59 +1,137 @@
 # backend/app/models/user.py
-from pydantic import BaseModel, EmailStr
-from typing import List, Optional
+"""User models for authentication and authorization."""
 from datetime import datetime
+from typing import Optional
 from enum import Enum
+
+from beanie import Document, Indexed
+from pydantic import BaseModel, EmailStr, Field
 
 
 class UserRole(str, Enum):
-    CITIZEN = "citizen"
-    OFFICER = "officer"
+    """User roles for RBAC."""
+    SUPER_ADMIN = "super_admin"
     ADMIN = "admin"
+    OFFICER = "officer"
+    VIEWER = "viewer"
+    API_USER = "api_user"
 
 
-class UserBase(BaseModel):
-    username: str
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = None
-    roles: List[UserRole] = [UserRole.CITIZEN]
+class UserStatus(str, Enum):
+    """User account status."""
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    SUSPENDED = "suspended"
+    PENDING = "pending"
 
 
-class UserCreate(UserBase):
+class UserCreate(BaseModel):
+    """Schema for creating a new user."""
+    email: EmailStr
+    phone: str
+    password: str = Field(..., min_length=8)
+    full_name: str
+    role: UserRole = UserRole.VIEWER
+    department: Optional[str] = None
+
+
+class UserLogin(BaseModel):
+    """Schema for user login."""
+    email: EmailStr
     password: str
 
 
-class User(UserBase):
-    id: int
-    is_active: bool = True
-    created_at: datetime
+class UserUpdate(BaseModel):
+    """Schema for updating user."""
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    role: Optional[UserRole] = None
+    status: Optional[UserStatus] = None
+    department: Optional[str] = None
+
+
+class UserDocument(Document):
+    """MongoDB document model for users."""
+    
+    # Authentication
+    email: Indexed(EmailStr, unique=True)
+    phone: Indexed(str)
+    hashed_password: str
+    
+    # Profile
+    full_name: str
+    department: Optional[str] = None
+    
+    # Authorization
+    role: Indexed(UserRole) = UserRole.VIEWER
+    status: UserStatus = UserStatus.ACTIVE
+    permissions: list[str] = Field(default_factory=list)
+    
+    # Session
     last_login: Optional[datetime] = None
+    failed_login_attempts: int = 0
+    locked_until: Optional[datetime] = None
     
-    model_config = {"from_attributes": True}
+    # Timestamps
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Metadata
+    created_by: Optional[str] = None  # User ID who created this account
+    
+    class Settings:
+        name = "users"
+        indexes = [
+            "email",
+            "phone",
+            "role",
+            "status",
+        ]
+    
+    def has_permission(self, permission: str) -> bool:
+        """Check if user has specific permission."""
+        if self.role == UserRole.SUPER_ADMIN:
+            return True
+        return permission in self.permissions
+    
+    def is_admin(self) -> bool:
+        """Check if user is admin or super admin."""
+        return self.role in [UserRole.SUPER_ADMIN, UserRole.ADMIN]
+    
+    def to_dict(self) -> dict:
+        """Convert to dictionary for API responses (exclude sensitive data)."""
+        return {
+            "id": str(self.id),
+            "email": self.email,
+            "phone": self.phone,
+            "full_name": self.full_name,
+            "role": self.role,
+            "status": self.status,
+            "department": self.department,
+            "last_login": self.last_login,
+            "created_at": self.created_at,
+        }
 
 
-class Officer(BaseModel):
-    id: int
-    user_id: int
-    badge_number: str
-    department: str
-    rank: Optional[str] = None
-    assigned_district: Optional[str] = None
-    is_active: bool = True
+class UserResponse(BaseModel):
+    """API response schema for user."""
+    id: str
+    email: EmailStr
+    phone: str
+    full_name: str
+    role: UserRole
+    status: UserStatus
+    department: Optional[str] = None
+    last_login: Optional[datetime] = None
     created_at: datetime
     
     model_config = {"from_attributes": True}
 
 
-class MessageLog(BaseModel):
-    id: int
-    complaint_id: Optional[int] = None
-    user_id: Optional[int] = None
-    phone_number: str
-    message_type: str  # incoming, outgoing, template
-    message_content: str
-    platform: str = "whatsapp"
-    status: str = "sent"  # sent, delivered, read, failed
-    metadata: Optional[dict] = {}
-    created_at: datetime
-    
-    model_config = {"from_attributes": True}
+class TokenResponse(BaseModel):
+    """JWT token response."""
+    access_token: str
+    refresh_token: Optional[str] = None
+    token_type: str = "bearer"
+    expires_in: int
+    user: UserResponse
