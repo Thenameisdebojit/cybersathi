@@ -69,6 +69,10 @@ externalPort = 5000
 localPort = 8000
 externalPort = 8000
 
+[[ports]]
+localPort = 36471
+externalPort = 80
+
 [deployment]
 deploymentTarget = "vm"
 run = ["bash", "-c", "mongod --dbpath /home/runner/workspace/data/db --bind_ip 127.0.0.1 --noauth & cd backend && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 & cd frontend && npm run build && npx serve -s dist -l 5000"]
