@@ -4,8 +4,10 @@ from datetime import datetime
 from typing import Optional
 from enum import Enum
 
-from beanie import Document, Indexed
+from sqlalchemy import Column, String, DateTime, Integer, Boolean, Enum as SQLEnum, JSON
 from pydantic import BaseModel, EmailStr, Field
+
+from app.models.base import Base
 
 
 class UserRole(str, Enum):
@@ -53,54 +55,48 @@ class UserUpdate(BaseModel):
     department: Optional[str] = None
 
 
-class UserDocument(Document):
-    """MongoDB document model for users."""
+class User(Base):
+    """SQLAlchemy model for users."""
+    __tablename__ = "users"
+    
+    id = Column(Integer, primary_key=True, index=True)
     
     # Authentication
-    email: EmailStr
-    phone: Optional[str] = None  # Optional for OAuth users initially
-    hashed_password: Optional[str] = None  # Optional for OAuth users
+    email = Column(String, unique=True, nullable=False, index=True)
+    phone = Column(String, index=True)
+    hashed_password = Column(String)
     
     # OAuth Fields
-    provider: Optional[str] = None  # 'local', 'google'
-    provider_id: Optional[str] = None  # Google ID or other provider ID
-    profile_picture: Optional[str] = None  # Profile picture URL
+    provider = Column(String)  # 'local', 'google'
+    provider_id = Column(String)
+    profile_picture = Column(String)
     
     # Profile
-    full_name: str
-    department: Optional[str] = None
+    full_name = Column(String, nullable=False)
+    department = Column(String)
     
     # Authorization
-    role: UserRole = Field(default=UserRole.VIEWER)
-    status: UserStatus = UserStatus.ACTIVE
-    permissions: list[str] = Field(default_factory=list)
+    role = Column(SQLEnum(UserRole), default=UserRole.VIEWER, index=True)
+    status = Column(SQLEnum(UserStatus), default=UserStatus.ACTIVE, index=True)
+    permissions = Column(JSON, default=list)
     
     # Session
-    last_login: Optional[datetime] = None
-    failed_login_attempts: int = 0
-    locked_until: Optional[datetime] = None
+    last_login = Column(DateTime)
+    failed_login_attempts = Column(Integer, default=0)
+    locked_until = Column(DateTime)
     
     # Timestamps
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Metadata
-    created_by: Optional[str] = None  # User ID who created this account
-    
-    class Settings:
-        name = "users"
-        indexes = [
-            "email",
-            "phone",
-            "role",
-            "status",
-        ]
+    created_by = Column(String)
     
     def has_permission(self, permission: str) -> bool:
         """Check if user has specific permission."""
         if self.role == UserRole.SUPER_ADMIN:
             return True
-        return permission in self.permissions
+        return permission in (self.permissions or [])
     
     def is_admin(self) -> bool:
         """Check if user is admin or super admin."""
@@ -113,8 +109,8 @@ class UserDocument(Document):
             "email": self.email,
             "phone": self.phone,
             "full_name": self.full_name,
-            "role": self.role,
-            "status": self.status,
+            "role": self.role.value if isinstance(self.role, UserRole) else self.role,
+            "status": self.status.value if isinstance(self.status, UserStatus) else self.status,
             "department": self.department,
             "last_login": self.last_login,
             "created_at": self.created_at,
@@ -127,7 +123,7 @@ class UserResponse(BaseModel):
     """API response schema for user."""
     id: str
     email: EmailStr
-    phone: str
+    phone: Optional[str] = None
     full_name: str
     role: UserRole
     status: UserStatus
@@ -147,3 +143,7 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     expires_in: int
     user: UserResponse
+
+
+# Keep old names for backwards compatibility
+UserDocument = User

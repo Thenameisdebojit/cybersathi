@@ -8,6 +8,7 @@ dependencies = [
     "aioredis>=2.0.1",
     "alembic>=1.17.1",
     "apscheduler>=3.11.1",
+    "asyncpg>=0.30.0",
     "authlib>=1.6.5",
     "bcrypt>=5.0.0",
     "beanie>=2.0.0",

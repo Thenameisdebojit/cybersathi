@@ -4,8 +4,10 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any
 from enum import Enum
 
-from beanie import Document, Indexed
+from sqlalchemy import Column, String, DateTime, Integer, Enum as SQLEnum, JSON, Text
 from pydantic import BaseModel, Field
+
+from app.models.base import Base
 
 
 class CampaignType(str, Enum):
@@ -53,42 +55,36 @@ class CampaignStats(BaseModel):
     replied: int = 0
 
 
-class CampaignDocument(Document):
-    """MongoDB document model for campaigns."""
+class Campaign(Base):
+    """SQLAlchemy model for campaigns."""
+    __tablename__ = "campaigns"
+    
+    id = Column(Integer, primary_key=True, index=True)
     
     # Basic Info
-    title: str
-    description: Optional[str] = None
-    campaign_type: CampaignType
+    title = Column(String, nullable=False)
+    description = Column(Text)
+    campaign_type = Column(SQLEnum(CampaignType), nullable=False)
     
-    # Content
-    messages: Dict[str, CampaignMessage]  # language code -> message
+    # Content (stored as JSONB)
+    messages = Column(JSON, nullable=False)  # language code -> message dict
     
-    # Targeting
-    target: CampaignTarget
+    # Targeting (stored as JSONB)
+    target = Column(JSON, nullable=False)
     
     # Scheduling
-    status: CampaignStatus = Field(default=CampaignStatus.DRAFT)
-    scheduled_at: Optional[datetime] = None
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    status = Column(SQLEnum(CampaignStatus), default=CampaignStatus.DRAFT, index=True)
+    scheduled_at = Column(DateTime, index=True)
+    started_at = Column(DateTime)
+    completed_at = Column(DateTime)
     
-    # Statistics
-    stats: CampaignStats = Field(default_factory=CampaignStats)
+    # Statistics (stored as JSONB)
+    stats = Column(JSON, default=dict)
     
     # Metadata
-    created_by: str  # User ID
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
-    
-    class Settings:
-        name = "campaigns"
-        indexes = [
-            "status",
-            "created_at",
-            "scheduled_at",
-            [("status", 1), ("scheduled_at", 1)],
-        ]
+    created_by = Column(String, nullable=False)  # User ID
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 class CampaignCreate(BaseModel):
@@ -112,3 +108,7 @@ class CampaignResponse(BaseModel):
     created_at: datetime
     
     model_config = {"from_attributes": True}
+
+
+# Keep old name for backwards compatibility
+CampaignDocument = Campaign
