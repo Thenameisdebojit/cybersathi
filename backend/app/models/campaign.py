@@ -68,7 +68,7 @@ class CampaignDocument(Document):
     target: CampaignTarget
     
     # Scheduling
-    status: Indexed(CampaignStatus) = CampaignStatus.DRAFT
+    status: CampaignStatus = Field(default=CampaignStatus.DRAFT)
     scheduled_at: Optional[datetime] = None
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
@@ -78,7 +78,7 @@ class CampaignDocument(Document):
     
     # Metadata
     created_by: str  # User ID
-    created_at: Indexed(datetime) = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     
     class Settings:

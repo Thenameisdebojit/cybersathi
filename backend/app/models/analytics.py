@@ -22,8 +22,8 @@ class EventType(str, Enum):
 class AnalyticsEventDocument(Document):
     """MongoDB document model for analytics events."""
     
-    event_type: Indexed(EventType)
-    timestamp: Indexed(datetime) = Field(default_factory=datetime.utcnow)
+    event_type: EventType
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
     
     # Context
     user_id: Optional[str] = None

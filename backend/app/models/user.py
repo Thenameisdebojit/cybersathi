@@ -54,8 +54,8 @@ class UserDocument(Document):
     """MongoDB document model for users."""
     
     # Authentication
-    email: Indexed(EmailStr, unique=True)
-    phone: Indexed(str)
+    email: EmailStr
+    phone: str
     hashed_password: str
     
     # Profile
@@ -63,7 +63,7 @@ class UserDocument(Document):
     department: Optional[str] = None
     
     # Authorization
-    role: Indexed(UserRole) = UserRole.VIEWER
+    role: UserRole = Field(default=UserRole.VIEWER)
     status: UserStatus = UserStatus.ACTIVE
     permissions: list[str] = Field(default_factory=list)
     

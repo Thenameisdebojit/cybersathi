@@ -42,17 +42,17 @@ class AuditLogDocument(Document):
     """MongoDB document model for audit logs."""
     
     # Who
-    user_id: Indexed(Optional[str]) = None
+    user_id: Optional[str] = None
     user_email: Optional[str] = None
     user_role: Optional[str] = None
     
     # What
-    action: Indexed(AuditAction)
+    action: AuditAction
     resource_type: str  # complaint, user, campaign, etc.
     resource_id: Optional[str] = None
     
     # When
-    timestamp: Indexed(datetime) = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
     
     # Where
     ip_address: Optional[str] = None

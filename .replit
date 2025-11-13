@@ -4,3 +4,52 @@ expertMode = true
 
 [nix]
 channel = "stable-25_05"
+packages = ["mongodb"]
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "mongodb"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "backend"
+
+[[workflows.workflow]]
+name = "mongodb"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "mongod --dbpath /home/runner/workspace/data/db --bind_ip 127.0.0.1 --noauth"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "backend"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd backend && python -m uvicorn app.main:app --host localhost --port 8000 --reload"
+waitForPort = 8000
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[ports]]
+localPort = 8000
+externalPort = 8000
+exposeLocalhost = true
+
+[[ports]]
+localPort = 35553
+externalPort = 80

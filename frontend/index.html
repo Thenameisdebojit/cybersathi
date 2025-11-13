@@ -1,24 +1,14 @@
-# Create frontend/index.html
-@"
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CyberSathi Admin</title>
+    <title>CyberSathi - Cybercrime Helpline Admin Dashboard</title>
+    <meta name="description" content="Admin dashboard for managing cybercrime complaints via WhatsApp integration with 1930 helpline" />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
-"@ | Out-File -FilePath "frontend\index.html" -Encoding utf8
-
-# Create __init__.py files
-New-Item -ItemType File -Path "backend\app\__init__.py" -Force
-New-Item -ItemType File -Path "backend\app\models\__init__.py" -Force
-New-Item -ItemType File -Path "backend\app\services\__init__.py" -Force
-New-Item -ItemType File -Path "backend\app\routers\__init__.py" -Force
-New-Item -ItemType File -Path "backend\tests\__init__.py" -Force
-
-Write-Host "Files created!" -ForegroundColor Green

@@ -98,11 +98,11 @@ class ComplaintUpdate(BaseModel):
 class ComplaintDocument(Document):
     """MongoDB document model for complaints."""
     
-    reference_id: Indexed(str, unique=True) = Field(default_factory=lambda: f"CYB{uuid.uuid4().hex[:10].upper()}")
+    reference_id: str = Field(default_factory=lambda: f"CYB{uuid.uuid4().hex[:10].upper()}")
     
     # Complainant Info (encrypted in production)
     name: Optional[str] = None
-    phone: Indexed(str)
+    phone: str
     email: Optional[str] = None
     language: str = "en"
     
@@ -121,7 +121,7 @@ class ComplaintDocument(Document):
     attachments: List[Attachment] = Field(default_factory=list)
     
     # Status Tracking
-    status: Indexed(ComplaintStatus) = ComplaintStatus.REGISTERED
+    status: ComplaintStatus = Field(default=ComplaintStatus.REGISTERED)
     status_history: List[StatusHistory] = Field(default_factory=list)
     
     # Integration
@@ -132,7 +132,7 @@ class ComplaintDocument(Document):
     assignee: Optional[str] = None  # User ID of assigned admin
     
     # Timestamps
-    created_at: Indexed(datetime) = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     
     # Metadata
