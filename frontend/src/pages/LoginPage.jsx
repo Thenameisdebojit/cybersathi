@@ -38,15 +38,15 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+    <div className="min-h-screen flex items-center justify-center gradient-hero py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full animate-fade-in">
+        <div className="bg-white rounded-2xl shadow-large p-8 border border-gray-100">
           <div className="text-center mb-8">
-            <div className="mx-auto h-16 w-16 bg-indigo-600 rounded-full flex items-center justify-center mb-4">
+            <div className="mx-auto h-16 w-16 bg-gradient-primary rounded-2xl flex items-center justify-center mb-4 shadow-medium">
               <Lock className="h-8 w-8 text-white" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900">CyberSathi Admin</h2>
-            <p className="mt-2 text-sm text-gray-600">Sign in to access your dashboard</p>
+            <h2 className="text-3xl font-bold text-gradient">CyberSathi Admin</h2>
+            <p className="mt-2 text-sm text-gray-600 font-medium">Sign in to access your dashboard</p>
           </div>
 
           {error && (
@@ -67,7 +67,7 @@ export default function LoginPage() {
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                  className="input-field pl-10"
                   placeholder="admin@cybersathi.in"
                 />
               </div>
@@ -84,7 +84,7 @@ export default function LoginPage() {
                   required
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                  className="input-field pl-10"
                   placeholder="••••••••"
                 />
               </div>
@@ -93,7 +93,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-white gradient-primary hover:shadow-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium min-h-touch active:scale-95"
             >
               {loading ? (
                 <span className="flex items-center">

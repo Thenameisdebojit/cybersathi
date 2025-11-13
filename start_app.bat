@@ -1,19 +1,11 @@
 @echo off
-REM CyberSathi Application Startup Script for Windows
-REM This script starts MongoDB, Backend, and Frontend services
+REM CyberSathi Application Startup Script for Windows (Replit Environment)
+REM This script starts Backend and Frontend services
 
 echo =========================================
 echo    Starting CyberSathi Application
 echo =========================================
 echo.
-
-REM Check if MongoDB is installed
-where mongod >nul 2>nul
-if %ERRORLEVEL% NEQ 0 (
-    echo [ERROR] MongoDB is not installed or not in PATH
-    pause
-    exit /b 1
-)
 
 REM Check if Python is installed
 where python >nul 2>nul
@@ -34,18 +26,13 @@ if %ERRORLEVEL% NEQ 0 (
 echo [OK] All requirements satisfied
 echo.
 
-REM Create data directory for MongoDB
-echo Setting up MongoDB data directory...
-if not exist "data\db" mkdir data\db
-echo [OK] Data directory ready
-echo.
-
-REM Start MongoDB
-echo Starting MongoDB...
-start "MongoDB" mongod --dbpath ./data/db --bind_ip 127.0.0.1 --noauth
-timeout /t 3 /nobreak >nul
-echo [OK] MongoDB started
-echo.
+REM Check for .env file
+if not exist "backend\.env" (
+    echo [WARNING] No .env file found in backend directory
+    echo [INFO] Please create backend\.env from .env.example
+    echo [INFO] Make sure to configure MONGODB_URL with your MongoDB Atlas connection string
+    pause
+)
 
 REM Start Backend
 echo Starting Backend API...
@@ -73,13 +60,16 @@ echo    CyberSathi is now running!
 echo =========================================
 echo.
 echo Services:
-echo   * MongoDB:  Running on port 27017
 echo   * Backend:  http://localhost:8000
 echo   * Frontend: http://localhost:5000
 echo.
 echo Admin Credentials (Default):
 echo   Email:    admin@cybersathi.in
-echo   Password: Admin@1930
+echo   Password: Check ADMIN_PASSWORD in your .env file
+echo.
+echo IMPORTANT:
+echo   - Make sure MongoDB Atlas is configured in backend\.env
+echo   - MONGODB_URL should point to your cloud database
 echo.
 echo Close all command windows to stop services
 echo.

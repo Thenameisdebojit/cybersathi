@@ -27,7 +27,7 @@ export default function App() {
           path="/*"
           element={
             <ProtectedRoute>
-              <div className="min-h-screen bg-gray-50">
+              <div className="min-h-screen bg-gradient-to-br from-gray-50 via-primary-50/10 to-white">
                 <Navbar />
                 <Routes>
                   <Route path="/dashboard" element={<DashboardPage />} />
