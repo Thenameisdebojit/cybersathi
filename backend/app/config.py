@@ -60,6 +60,11 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
+    # Google OAuth
+    GOOGLE_CLIENT_ID: str = "your_google_client_id"
+    GOOGLE_CLIENT_SECRET: str = "your_google_client_secret"
+    GOOGLE_REDIRECT_URI: str = "http://localhost:5000/auth/google/callback"
+    
     # Password Policy
     MIN_PASSWORD_LENGTH: int = 8
     REQUIRE_SPECIAL_CHARS: bool = True
@@ -104,7 +109,7 @@ class Settings(BaseSettings):
     AUDIT_LOG_RETENTION_DAYS: int = 730
     
     # CORS
-    CORS_ORIGINS: list = ["http://localhost:5173", "http://localhost:3000"]
+    CORS_ORIGINS: list = ["http://localhost:5173", "http://localhost:5000", "http://localhost:3000"]
     
     @property
     def mongodb_connection_string(self) -> str:

@@ -1,7 +1,11 @@
 # backend/app/routers/auth.py
 """Authentication router for user login, registration, and profile management."""
 from fastapi import APIRouter, HTTPException, status, Depends
-from datetime import timedelta
+from fastapi.responses import RedirectResponse
+from datetime import timedelta, datetime
+from google.oauth2 import id_token
+from google.auth.transport import requests
+import httpx
 
 from app.models.user import (
     UserCreate, UserLogin, UserResponse, TokenResponse, 
@@ -233,3 +237,125 @@ async def change_password(
     )
     
     return {"message": "Password changed successfully"}
+
+
+@router.get("/google/login")
+async def google_login():
+    """
+    Redirect to Google OAuth login page.
+    """
+    google_auth_url = (
+        f"https://accounts.google.com/o/oauth2/v2/auth?"
+        f"client_id={settings.GOOGLE_CLIENT_ID}&"
+        f"redirect_uri={settings.GOOGLE_REDIRECT_URI}&"
+        f"response_type=code&"
+        f"scope=openid%20email%20profile&"
+        f"access_type=offline"
+    )
+    return {"url": google_auth_url}
+
+
+@router.post("/google/callback", response_model=TokenResponse)
+async def google_callback(code: str):
+    """
+    Handle Google OAuth callback and create/login user.
+    
+    - **code**: Authorization code from Google
+    """
+    try:
+        # Exchange code for tokens
+        async with httpx.AsyncClient() as client:
+            token_response = await client.post(
+                "https://oauth2.googleapis.com/token",
+                data={
+                    "code": code,
+                    "client_id": settings.GOOGLE_CLIENT_ID,
+                    "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                    "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+                    "grant_type": "authorization_code",
+                }
+            )
+            
+            if token_response.status_code != 200:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Failed to exchange code for token"
+                )
+            
+            tokens = token_response.json()
+            id_token_str = tokens.get("id_token")
+            
+            # Verify and decode ID token
+            idinfo = id_token.verify_oauth2_token(
+                id_token_str, 
+                requests.Request(), 
+                settings.GOOGLE_CLIENT_ID
+            )
+            
+            # Extract user info
+            google_id = idinfo.get("sub")
+            email = idinfo.get("email")
+            name = idinfo.get("name")
+            picture = idinfo.get("picture")
+            
+            # Check if user exists
+            user = await UserDocument.find_one(
+                {"$or": [
+                    {"provider_id": google_id, "provider": "google"},
+                    {"email": email}
+                ]}
+            )
+            
+            if user:
+                # Update existing user
+                user.provider = "google"
+                user.provider_id = google_id
+                user.profile_picture = picture
+                user.last_login = datetime.utcnow()
+                await user.save()
+            else:
+                # Create new user
+                user = UserDocument(
+                    email=email,
+                    phone="",  # Will be updated later
+                    full_name=name,
+                    provider="google",
+                    provider_id=google_id,
+                    profile_picture=picture,
+                    role=UserRole.VIEWER,
+                    status=UserStatus.ACTIVE,
+                    last_login=datetime.utcnow(),
+                )
+                await user.insert()
+                
+                await AuditLogDocument.log(
+                    action=AuditAction.USER_REGISTERED,
+                    resource_type="user",
+                    user_id=str(user.id),
+                    user_email=user.email,
+                    resource_id=str(user.id),
+                    description="User registered via Google OAuth",
+                )
+            
+            # Create tokens
+            access_token = AuthService.create_access_token(
+                user_id=str(user.id),
+                email=user.email,
+                role=user.role.value,
+            )
+            
+            refresh_token = AuthService.create_refresh_token(user_id=str(user.id))
+            
+            return TokenResponse(
+                access_token=access_token,
+                refresh_token=refresh_token,
+                token_type="bearer",
+                expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+                user=UserResponse(**user.to_dict())
+            )
+            
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Google authentication failed: {str(e)}"
+        )

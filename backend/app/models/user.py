@@ -28,11 +28,14 @@ class UserStatus(str, Enum):
 class UserCreate(BaseModel):
     """Schema for creating a new user."""
     email: EmailStr
-    phone: str
-    password: str = Field(..., min_length=8)
+    phone: Optional[str] = None  # Optional for OAuth
+    password: Optional[str] = Field(None, min_length=8)  # Optional for OAuth
     full_name: str
     role: UserRole = UserRole.VIEWER
     department: Optional[str] = None
+    provider: Optional[str] = "local"  # 'local', 'google'
+    provider_id: Optional[str] = None
+    profile_picture: Optional[str] = None
 
 
 class UserLogin(BaseModel):
@@ -55,8 +58,13 @@ class UserDocument(Document):
     
     # Authentication
     email: EmailStr
-    phone: str
-    hashed_password: str
+    phone: Optional[str] = None  # Optional for OAuth users initially
+    hashed_password: Optional[str] = None  # Optional for OAuth users
+    
+    # OAuth Fields
+    provider: Optional[str] = None  # 'local', 'google'
+    provider_id: Optional[str] = None  # Google ID or other provider ID
+    profile_picture: Optional[str] = None  # Profile picture URL
     
     # Profile
     full_name: str
@@ -110,6 +118,8 @@ class UserDocument(Document):
             "department": self.department,
             "last_login": self.last_login,
             "created_at": self.created_at,
+            "provider": self.provider,
+            "profile_picture": self.profile_picture,
         }
 
 
@@ -124,6 +134,8 @@ class UserResponse(BaseModel):
     department: Optional[str] = None
     last_login: Optional[datetime] = None
     created_at: datetime
+    provider: Optional[str] = None
+    profile_picture: Optional[str] = None
     
     model_config = {"from_attributes": True}
 
