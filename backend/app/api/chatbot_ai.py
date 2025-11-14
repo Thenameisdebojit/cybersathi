@@ -1,6 +1,6 @@
 # backend/app/api/chatbot_ai.py
 """AI Chatbot API using OpenAI for cybercrime questions."""
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from openai import OpenAI
@@ -8,8 +8,23 @@ import os
 
 router = APIRouter()
 
-# Initialize OpenAI client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Initialize OpenAI client with safe error handling
+_openai_client: Optional[OpenAI] = None
+try:
+    api_key = os.getenv("OPENAI_API_KEY")
+    if api_key:
+        _openai_client = OpenAI(api_key=api_key)
+except Exception as e:
+    print(f"Warning: Failed to initialize OpenAI client: {e}")
+
+def get_openai_client() -> OpenAI:
+    """Get OpenAI client or raise error if not configured."""
+    if _openai_client is None:
+        raise HTTPException(
+            status_code=503,
+            detail="AI chatbot is not configured. Please set OPENAI_API_KEY environment variable."
+        )
+    return _openai_client
 
 # System prompt for cybercrime knowledge
 CYBERCRIME_SYSTEM_PROMPT = """You are an expert AI assistant for India's Cybercrime Helpline (1930) - CyberSathi. 
@@ -63,6 +78,9 @@ async def chat_with_ai(request: ChatRequest):
     Uses OpenAI GPT-4 to answer questions about cybercrime, fraud types,
     prevention, and reporting procedures.
     """
+    # Get client with proper error handling
+    client = get_openai_client()
+    
     try:
         # Prepare messages with system prompt
         messages = [

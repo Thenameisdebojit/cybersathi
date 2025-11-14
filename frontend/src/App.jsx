@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
+import FloatingChatbot from './components/FloatingChatbot';
+import LandingPage from './pages/LandingPage';
 import NewLoginPage from './pages/NewLoginPage';
 import SignupPage from './pages/SignupPage';
 import GoogleCallbackPage from './pages/GoogleCallbackPage';
@@ -17,11 +19,10 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<NewLoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
-        
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
         
         <Route
           path="/*"
@@ -39,6 +40,7 @@ export default function App() {
                   <Route path="/profile" element={<ProfilePage />} />
                   <Route path="/settings" element={<SettingsPage />} />
                 </Routes>
+                <FloatingChatbot />
               </div>
             </ProtectedRoute>
           }

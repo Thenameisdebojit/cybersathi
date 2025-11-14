@@ -49,11 +49,19 @@ export default function FloatingChatbot() {
       ]);
     } catch (error) {
       console.error('Error sending message:', error);
+      let errorMessage = 'I apologize, but I encountered an error. Please try again or call the 1930 helpline for immediate assistance.';
+      
+      if (error.response?.status === 503) {
+        errorMessage = '⚠️ The AI chatbot is currently not configured. Please contact the administrator to set up the OpenAI API key, or call the 1930 helpline for immediate assistance.';
+      } else if (error.response?.data?.detail) {
+        errorMessage = `Error: ${error.response.data.detail}. Please call the 1930 helpline for immediate assistance.`;
+      }
+      
       setMessages([
         ...newMessages,
         {
           role: 'assistant',
-          content: 'I apologize, but I encountered an error. Please try again or call the 1930 helpline for immediate assistance.'
+          content: errorMessage
         }
       ]);
     } finally {
