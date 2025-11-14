@@ -12,8 +12,11 @@
 ### Prerequisites
 - **Python**: 3.11 or higher
 - **Node.js**: 18 or higher  
-- **MongoDB Atlas**: Cloud database (free tier available)
+- **MongoDB Atlas**: Cloud database (**REQUIRED** - free tier available)
 - **WhatsApp Business API**: Meta Cloud API access (optional for development)
+
+> ⚠️ **IMPORTANT**: Login and signup require MongoDB Atlas!  
+> **[→ Follow this 5-minute setup guide](MONGODB_SETUP.md)** to get your FREE database.
 
 ### Installation
 
@@ -22,13 +25,20 @@
 cd /path/to/cybersathi
 ```
 
-#### 2. Configure Environment
+#### 2. Set Up MongoDB (REQUIRED)
+**Before running the app**, follow **[MONGODB_SETUP.md](MONGODB_SETUP.md)** to:
+1. Create a FREE MongoDB Atlas account (no credit card needed)
+2. Create a cluster and database user
+3. Get your connection string
+4. Update `backend/.env`
+
+#### 3. Configure Environment
 ```bash
 cp backend/.env.example backend/.env
 ```
 
 Edit `backend/.env` with your credentials:
-- MongoDB Atlas connection string
+- **MongoDB Atlas connection string** (REQUIRED - see MONGODB_SETUP.md)
 - WhatsApp API tokens (or use mock mode)
 - Admin credentials
 - JWT secret keys
