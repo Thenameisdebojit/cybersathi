@@ -43,7 +43,7 @@ Edit `backend/.env` with your credentials:
 - Admin credentials
 - JWT secret keys
 
-#### 3. Install Dependencies
+#### 4. Install Dependencies
 
 **IMPORTANT**: Before running the application for the first time, install dependencies:
 
