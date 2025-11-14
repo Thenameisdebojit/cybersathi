@@ -1,6 +1,7 @@
-modules = ["python-3.12", "nodejs-20", "web", "bash"]
+modules = ["nodejs-20", "web", "bash", "python-3.11"]
 [agent]
 expertMode = true
+integrations = ["python_openai:1.0.0"]
 
 [nix]
 channel = "stable-25_05"
@@ -62,7 +63,3 @@ exposeLocalhost = true
 [[ports]]
 localPort = 37197
 externalPort = 3000
-
-[[ports]]
-localPort = 45303
-externalPort = 3001

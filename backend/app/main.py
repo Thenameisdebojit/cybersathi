@@ -11,6 +11,7 @@ from starlette.responses import JSONResponse
 from app.config import settings
 from app.database import db
 from app.routers import auth, complaints, tracking, escalation, whatsapp_webhook, analytics
+from app.api import uploads, chatbot_ai
 from app.services.auth import AuthService
 from app.models.user import UserDocument, UserRole, UserStatus
 
@@ -110,6 +111,8 @@ app.include_router(complaints.router, prefix="/api/v1/complaints", tags=["Compla
 app.include_router(tracking.router, prefix="/api/v1/tracking", tags=["Tracking"])
 app.include_router(escalation.router, prefix="/api/v1/escalation", tags=["Escalation"])
 app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["Analytics"])
+app.include_router(uploads.router, prefix="/api/v1/files", tags=["File Upload"])
+app.include_router(chatbot_ai.router, prefix="/api/v1/ai", tags=["AI Chatbot"])
 app.include_router(whatsapp_webhook.router, prefix="", tags=["WhatsApp"])
 
 

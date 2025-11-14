@@ -103,8 +103,16 @@ class Settings(BaseSettings):
     # File Upload
     MAX_UPLOAD_SIZE_MB: int = 10
     UPLOAD_DIR: str = "./uploads"
+    LOCAL_STORAGE_PATH: str = "data/uploads"
     ALLOWED_EXTENSIONS_STR: str = Field(default="jpg,jpeg,png,pdf,doc,docx", validation_alias="ALLOWED_EXTENSIONS")
     CORS_ORIGINS_STR: str = Field(default="http://localhost:5173,http://localhost:5000,http://localhost:3000", validation_alias="CORS_ORIGINS")
+    
+    # S3-Compatible Storage (Optional - if not set, uses local storage)
+    S3_ENDPOINT: Optional[str] = None
+    AWS_ACCESS_KEY_ID: Optional[str] = None
+    AWS_SECRET_ACCESS_KEY: Optional[str] = None
+    AWS_REGION: Optional[str] = "us-east-1"
+    S3_BUCKET_NAME: Optional[str] = "cybersathi-uploads"
     
     # Data Retention
     DATA_RETENTION_DAYS: int = 365
