@@ -45,9 +45,9 @@ sentry-sdk[fastapi]==1.39.2
 # Background Tasks
 apscheduler==3.10.4
 
-# Data Processing
-pandas==2.1.4
-numpy==1.26.2
+# Data Processing (Optional - not currently used in core app)
+# pandas==2.1.4  # Requires C++ compiler on Windows - uncomment if needed
+# numpy==1.26.2  # Requires C++ compiler on Windows - uncomment if needed
 python-dateutil==2.8.2
 
 # Utilities

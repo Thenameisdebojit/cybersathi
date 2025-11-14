@@ -48,10 +48,19 @@ cd ..
 
 REM Install backend dependencies
 echo [INFO] Installing backend dependencies...
+echo [INFO] This may take a few minutes on first run...
 cd backend
-pip install -r requirements.txt
+python -m pip install --upgrade pip
+pip install -r requirements.txt --no-cache-dir
 if %ERRORLEVEL% NEQ 0 (
+    echo.
     echo [ERROR] Failed to install backend dependencies!
+    echo.
+    echo Common fixes:
+    echo 1. Make sure you have Python 3.11 or newer (not 3.13)
+    echo 2. Try running: pip install --upgrade setuptools wheel
+    echo 3. If pandas/numpy fails, they're optional - comment them out in requirements.txt
+    echo.
     pause
     exit /b 1
 )

@@ -66,7 +66,8 @@ async def create_default_admin():
         
         if not admin:
             # Truncate password to 72 bytes for bcrypt compatibility
-            admin_password = settings.ADMIN_PASSWORD[:72]
+            # bcrypt only supports passwords up to 72 bytes
+            admin_password = settings.ADMIN_PASSWORD.encode('utf-8')[:72].decode('utf-8', errors='ignore')
             
             # Create admin user
             admin = await AuthService.create_user(
