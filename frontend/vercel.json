@@ -3,10 +3,10 @@
   "name": "cybersathi-frontend",
   "builds": [
     {
-      "src": "frontend/package.json",
+      "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "frontend/dist"
+        "distDir": "dist"
       }
     }
   ],
@@ -15,18 +15,8 @@
       "handle": "filesystem"
     },
     {
-      "src": "/api/(.*)",
-      "dest": "https://your-backend-url.vercel.app/api/v1/$1"
-    },
-    {
       "src": "/(.*)",
-      "dest": "/frontend/index.html"
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://your-backend-url.vercel.app/api/v1/:path*"
+      "dest": "/index.html"
     }
   ],
   "headers": [
@@ -47,8 +37,5 @@
         }
       ]
     }
-  ],
-  "env": {
-    "VITE_API_URL": "https://your-backend-url.vercel.app/api/v1"
-  }
+  ]
 }
