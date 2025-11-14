@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "web", "bash", "python-3.11"]
+modules = ["python-3.12", "nodejs-20", "web", "bash"]
 [agent]
 expertMode = true
 integrations = ["python_openai:1.0.0"]
@@ -44,7 +44,7 @@ outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd backend && python3.11 -m uvicorn app.main:app --host localhost --port 8000 --reload"
+args = "cd backend && python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 waitForPort = 8000
 
 [[ports]]
@@ -58,8 +58,7 @@ externalPort = 3002
 [[ports]]
 localPort = 8000
 externalPort = 8000
-exposeLocalhost = true
 
 [[ports]]
-localPort = 37339
+localPort = 46751
 externalPort = 3000

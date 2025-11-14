@@ -34,6 +34,8 @@ class Database:
                 mongodb_url,
                 minPoolSize=settings.MONGODB_MIN_POOL_SIZE,
                 maxPoolSize=settings.MONGODB_MAX_POOL_SIZE,
+                serverSelectionTimeoutMS=5000,
+                connectTimeoutMS=5000,
             )
             
             # Initialize Beanie with document models
