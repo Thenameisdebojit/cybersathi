@@ -1,0 +1,62 @@
+{
+  "greeting": {
+    "welcome": "🙏 Welcome to CyberSathi!\n\nI'm here to help you report cybercrime incidents and track your complaints.\n\n*How can I assist you today?*",
+    "consent": "To proceed, I need your consent to collect and process your information. This data will be used solely for registering and investigating your cybercrime complaint.\n\nDo you consent? Reply:\n1️⃣ Yes, I consent\n2️⃣ No"
+  },
+  "menu": {
+    "main": "Please choose an option:\n\n1️⃣ Report New Complaint\n2️⃣ Check Complaint Status\n3️⃣ Speak to Agent\n4️⃣ Cyber Safety Tips\n\nReply with the number of your choice.",
+    "complaint_types": "What type of cybercrime do you want to report?\n\n1️⃣ UPI/Payment Fraud\n2️⃣ Online Shopping Scam\n3️⃣ Job Fraud\n4️⃣ Social Media Fraud\n5️⃣ Investment Scam\n6️⃣ Phishing/Vishing\n7️⃣ Ransomware/Malware\n8️⃣ Other\n\nReply with the number."
+  },
+  "complaint_flow": {
+    "ask_name": "Please provide your *Full Name* (as per official ID):",
+    "ask_guardian": "Please provide your *Father's/Guardian's Name*:",
+    "ask_dob": "Please provide your *Date of Birth* (DD-MM-YYYY):\n\nExample: 15-08-1990",
+    "ask_phone": "Please provide your *10-digit Mobile Number*:\n\nExample: 9876543210",
+    "ask_email": "Please provide your *Email Address*:\n\nExample: yourname@example.com",
+    "ask_gender": "Please select your *Gender*:\n\n1️⃣ Male\n2️⃣ Female\n3️⃣ Other\n4️⃣ Prefer not to say",
+    "ask_village": "Please provide your *Village/Town Name*:",
+    "ask_post_office": "Please provide your *Post Office Name*:",
+    "ask_police_station": "Please provide your nearest *Police Station Name*:",
+    "ask_district": "Please provide your *District Name*:",
+    "ask_pin": "Please provide your *6-digit PIN Code*:\n\nExample: 751001",
+    "ask_description": "Please describe the incident in detail:\n\n- What happened?\n- When did it happen?\n- How much money was involved (if any)?\n- Do you have any evidence?\n\n*Minimum 10 characters required*",
+    "ask_amount": "What is the *financial loss amount* (in ₹)?\n\nEnter 0 if no financial loss.\n\nExample: 15000",
+    "ask_platform": "Which platform/app was involved?\n\nExample: PhonePe, Google Pay, Paytm, Instagram, etc.",
+    "ask_transaction_id": "Do you have a *Transaction ID* or *Reference Number*?\n\nProvide it if available, or type 'No' to skip.",
+    "ask_attachments": "Do you have any supporting documents/screenshots?\n\n📎 Send them now (up to 5 files)\n⏭️ Or type 'Done' to proceed without attachments",
+    "confirm": "Please review your complaint:\n\n*Name:* {name}\n*Guardian:* {guardian}\n*DOB:* {dob}\n*Phone:* {phone}\n*Email:* {email}\n*Gender:* {gender}\n*Address:* {village}, PO {post_office}, PS {police_station}\n*District:* {district}, PIN {pin}\n\n*Complaint Type:* {complaint_type}\n*Description:* {description}\n*Amount:* ₹{amount}\n*Platform:* {platform}\n*Attachments:* {attachment_count} file(s)\n\nIs this information correct?\n\n1️⃣ Yes, Submit\n2️⃣ No, Edit"
+  },
+  "validation": {
+    "invalid_phone": "❌ Invalid phone number. Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.\n\nExample: 9876543210",
+    "invalid_email": "❌ Invalid email address. Please enter a valid email.\n\nExample: yourname@example.com",
+    "invalid_pin": "❌ Invalid PIN code. Please enter a valid 6-digit PIN code (cannot start with 0).\n\nExample: 751001",
+    "invalid_dob": "❌ Invalid date of birth. Please enter in DD-MM-YYYY format.\n\nExample: 15-08-1990",
+    "invalid_name": "❌ Name is required and must be at least 2 characters long.",
+    "invalid_description": "❌ Description must be at least 10 characters long. Please provide more details about the incident.",
+    "invalid_amount": "❌ Please enter a valid amount in numbers only.\n\nExample: 15000"
+  },
+  "success": {
+    "complaint_registered": "✅ *Complaint Registered Successfully!*\n\n🎫 Your Ticket ID: *{ticket_id}*\n📅 Registered: {date}\n\n*What's Next?*\n\n1️⃣ Your complaint has been logged in the system\n2️⃣ It will be reviewed by our team within 24-48 hours\n3️⃣ You'll receive updates via SMS/WhatsApp\n4️⃣ You can track status anytime using your Ticket ID\n\n*Important:*\n⚠️ Save your Ticket ID for future reference\n⚠️ For urgent cases, call 1930 (Cybercrime Helpline)\n\nThank you for reporting. We're here to help! 🛡️",
+    "status_found": "📊 *Complaint Status*\n\n🎫 Ticket ID: {ticket_id}\n📅 Filed: {date}\n🔍 Status: *{status}*\n\n{status_details}\n\n---\nNeed help? Call 1930"
+  },
+  "tracking": {
+    "ask_ticket_id": "Please provide your *Ticket ID* to check status.\n\nExample: CS-20241114-123456",
+    "not_found": "❌ No complaint found with this Ticket ID. Please check and try again.",
+    "status_registered": "📝 Your complaint has been registered and is under review.",
+    "status_under_review": "🔍 Your complaint is being investigated by our team.",
+    "status_resolved": "✅ Your complaint has been resolved. Check your email for details.",
+    "status_closed": "⚫ Your complaint has been closed."
+  },
+  "awareness": {
+    "tips": "🛡️ *Cyber Safety Tips*\n\n1️⃣ Never share OTP/PIN with anyone\n2️⃣ Verify before clicking links\n3️⃣ Use strong, unique passwords\n4️⃣ Enable 2-Factor Authentication\n5️⃣ Keep software updated\n6️⃣ Be cautious of \"too good to be true\" offers\n\n*Remember:*\n⚠️ No legitimate organization asks for OTP/CVV\n⚠️ Banks never call asking for PIN\n⚠️ Government never asks for money via phone\n\n📞 Report suspicious activity: 1930"
+  },
+  "errors": {
+    "generic": "❌ Sorry, something went wrong. Please try again or contact support at 1930.",
+    "timeout": "⏱️ Session timeout. Please start over by typing 'Hi'.",
+    "invalid_input": "❌ I didn't understand that. Please provide a valid response.",
+    "max_retries": "❌ Too many invalid attempts. Please start over or call 1930 for assistance."
+  },
+  "agent": {
+    "escalation": "📞 *Connect with Agent*\n\nYou can speak to our support team:\n\n📞 Call: 1930 (24x7 Helpline)\n📧 Email: support@cybercrime.gov.in\n\nOr share your Ticket ID and our team will call you back within 24 hours.\n\nProvide Ticket ID or type 'Back' to return to menu."
+  }
+}
