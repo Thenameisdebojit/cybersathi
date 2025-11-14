@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Shield, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import { authService } from '../services/auth';
 import Loader from '../components/ui/Loader';
+import Logo from '../components/Logo';
 
 export default function NewLoginPage() {
   const [formData, setFormData] = useState({ email: '', password: '' });
