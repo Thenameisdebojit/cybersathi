@@ -33,7 +33,39 @@ Edit `backend/.env` with your credentials:
 - Admin credentials
 - JWT secret keys
 
-#### 3. Start Application
+#### 3. Install Dependencies
+
+**IMPORTANT**: Before running the application for the first time, install dependencies:
+
+**Windows:**
+```cmd
+# Install frontend dependencies
+cd frontend
+npm install
+
+# Install backend dependencies
+cd ..\backend
+pip install -r requirements.txt
+
+# Return to root
+cd ..
+```
+
+**Linux/Mac:**
+```bash
+# Install frontend dependencies
+cd frontend
+npm install
+
+# Install backend dependencies
+cd ../backend
+pip install -r requirements.txt
+
+# Return to root
+cd ..
+```
+
+#### 4. Start Application
 
 **Windows:**
 ```bash
@@ -46,7 +78,7 @@ chmod +x start_app.sh
 ./start_app.sh
 ```
 
-#### 4. Access the Application
+#### 5. Access the Application
 - **Frontend Dashboard**: http://localhost:5000
 - **Backend API**: http://localhost:8000
 - **API Documentation**: http://localhost:8000/docs

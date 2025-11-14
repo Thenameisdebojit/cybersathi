@@ -1,8 +1,14 @@
 """
 WhatsApp Conversation State Machine with NLU Integration
 Implements 13-field complaint collection flow as per Prompt 1 requirements
+
+⚠️ CRITICAL: This module needs to be updated to collect ALL PS2.pdf required fields:
+- Name, Guardian Name, DOB, Phone, Email, Gender
+- Village, Post Office, Police Station, District, PIN Code
+See PS2_IMPLEMENTATION_PLAN.md for detailed refactoring guide
 """
 
+import re
 from typing import Dict, Optional, List
 from datetime import datetime
 from enum import Enum
@@ -28,7 +34,7 @@ class ConversationStage(str, Enum):
 
 
 class ComplaintField(str, Enum):
-    """13 required fields for complaint collection"""
+    """Complaint collection fields - TO BE UPDATED per PS2.pdf requirements"""
     FRAUD_TYPE = "fraud_type"
     INCIDENT_DESCRIPTION = "incident_description"
     INCIDENT_DATE = "incident_date"
