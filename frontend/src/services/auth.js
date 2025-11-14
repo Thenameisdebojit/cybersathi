@@ -34,22 +34,22 @@ class AuthService {
   }
 
   async register(userData) {
-    const response = await api.post('/auth/register', userData);
+    const response = await api.post('/api/v1/auth/register', userData);
     return response.data;
   }
 
   async login(email, password) {
-    const response = await api.post('/auth/login', { email, password });
+    const response = await api.post('/api/v1/auth/login', { email, password });
     this.saveAuth(response.data);
     return response.data;
   }
 
   async getGoogleAuthUrl() {
-    return await api.get('/auth/google/login');
+    return await api.get('/api/v1/auth/google/login');
   }
 
   async googleCallback(code) {
-    const response = await api.post(`/auth/google/callback?code=${code}`);
+    const response = await api.post(`/api/v1/auth/google/callback?code=${code}`);
     this.saveAuth(response.data);
     return response.data;
   }
@@ -72,7 +72,7 @@ class AuthService {
 
   async getCurrentUser() {
     try {
-      const response = await api.get('/auth/me');
+      const response = await api.get('/api/v1/auth/me');
       this.user = response.data;
       return response.data;
     } catch (error) {
@@ -82,7 +82,7 @@ class AuthService {
   }
 
   async updateProfile(updates) {
-    const response = await api.put('/auth/profile', updates);
+    const response = await api.put('/api/v1/auth/me', updates);
     this.user = response.data;
     
     const stored = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY));
@@ -93,7 +93,7 @@ class AuthService {
   }
 
   async changePassword(currentPassword, newPassword) {
-    const response = await api.post('/auth/change-password', {
+    const response = await api.post('/api/v1/auth/change-password', {
       current_password: currentPassword,
       new_password: newPassword,
     });
