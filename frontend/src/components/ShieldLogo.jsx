@@ -1,0 +1,125 @@
+export function ShieldLogo({ className }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 300 300"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        <linearGradient id="shieldGradient" x1="150" y1="50" x2="150" y2="250">
+          <stop offset="0%" stopColor="#00D9FF" />
+          <stop offset="50%" stopColor="#0099CC" />
+          <stop offset="100%" stopColor="#006699" />
+        </linearGradient>
+        <linearGradient id="lockGradient" x1="150" y1="120" x2="150" y2="180">
+          <stop offset="0%" stopColor="#00FFFF" />
+          <stop offset="100%" stopColor="#00AAFF" />
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+
+      {/* Outer concentric circles */}
+      <circle cx="150" cy="150" r="140" stroke="#0066FF" strokeWidth="0.5" opacity="0.3" />
+      <circle cx="150" cy="150" r="130" stroke="#0088FF" strokeWidth="0.5" opacity="0.4" />
+      <circle cx="150" cy="150" r="120" stroke="#00AAFF" strokeWidth="1" opacity="0.5" />
+      
+      {/* Decorative arc segments */}
+      <path d="M 150 10 A 140 140 0 0 1 250 90" stroke="#00D9FF" strokeWidth="2" opacity="0.6" fill="none" strokeDasharray="10 5" />
+      <path d="M 250 210 A 140 140 0 0 1 150 290" stroke="#0088FF" strokeWidth="2" opacity="0.5" fill="none" strokeDasharray="8 4" />
+      <path d="M 50 210 A 140 140 0 0 1 10 150" stroke="#0099FF" strokeWidth="2" opacity="0.5" fill="none" strokeDasharray="6 3" />
+      
+      {/* Particles/dots around the shield */}
+      <circle cx="150" cy="20" r="2" fill="#00FFFF" opacity="0.8" />
+      <circle cx="270" cy="150" r="2.5" fill="#00D9FF" opacity="0.9" />
+      <circle cx="220" cy="80" r="1.5" fill="#00AAFF" opacity="0.7" />
+      <circle cx="80" cy="220" r="2" fill="#0099FF" opacity="0.8" />
+      <circle cx="30" cy="150" r="2" fill="#00CCFF" opacity="0.8" />
+      <circle cx="200" cy="250" r="1.5" fill="#00AAFF" opacity="0.7" />
+      <circle cx="100" cy="50" r="2" fill="#00D9FF" opacity="0.8" />
+      
+      {/* Main shield outline - hexagonal style */}
+      <path
+        d="M 150 60 L 90 90 L 90 165 C 90 200 110 225 150 245 C 190 225 210 200 210 165 L 210 90 Z"
+        fill="url(#shieldGradient)"
+        fillOpacity="0.15"
+        stroke="#00D9FF"
+        strokeWidth="2.5"
+        filter="url(#glow)"
+      />
+      
+      {/* Inner shield layer */}
+      <path
+        d="M 150 70 L 100 95 L 100 165 C 100 195 117 217 150 235 C 183 217 200 195 200 165 L 200 95 Z"
+        fill="none"
+        stroke="#00AAFF"
+        strokeWidth="1.5"
+        opacity="0.7"
+      />
+      
+      {/* Circuit board patterns radiating from center */}
+      {/* Top circuits */}
+      <path d="M 150 150 L 150 100 M 150 110 L 140 110 M 150 110 L 160 110" stroke="#00D9FF" strokeWidth="1.5" opacity="0.6" />
+      <circle cx="150" cy="100" r="2.5" fill="#00FFFF" />
+      <circle cx="140" cy="110" r="2" fill="#00D9FF" />
+      <circle cx="160" cy="110" r="2" fill="#00D9FF" />
+      
+      {/* Right circuits */}
+      <path d="M 150 150 L 185 135 M 180 140 L 180 130 M 180 140 L 190 145" stroke="#00D9FF" strokeWidth="1.5" opacity="0.6" />
+      <circle cx="185" cy="135" r="2.5" fill="#00FFFF" />
+      <circle cx="180" cy="130" r="2" fill="#00D9FF" />
+      <circle cx="190" cy="145" r="2" fill="#00D9FF" />
+      
+      {/* Left circuits */}
+      <path d="M 150 150 L 115 135 M 120 140 L 120 130 M 120 140 L 110 145" stroke="#00D9FF" strokeWidth="1.5" opacity="0.6" />
+      <circle cx="115" cy="135" r="2.5" fill="#00FFFF" />
+      <circle cx="120" cy="130" r="2" fill="#00D9FF" />
+      <circle cx="110" cy="145" r="2" fill="#00D9FF" />
+      
+      {/* Bottom circuits */}
+      <path d="M 150 165 L 130 190 M 135 185 L 130 180" stroke="#00D9FF" strokeWidth="1.5" opacity="0.6" />
+      <path d="M 150 165 L 170 190 M 165 185 L 170 180" stroke="#00D9FF" strokeWidth="1.5" opacity="0.6" />
+      <circle cx="130" cy="190" r="2.5" fill="#00FFFF" />
+      <circle cx="170" cy="190" r="2.5" fill="#00FFFF" />
+      <circle cx="130" cy="180" r="2" fill="#00D9FF" />
+      <circle cx="170" cy="180" r="2" fill="#00D9FF" />
+      
+      {/* Lock body - main rectangle */}
+      <rect
+        x="135"
+        y="155"
+        width="30"
+        height="25"
+        rx="2"
+        fill="url(#lockGradient)"
+        stroke="#00FFFF"
+        strokeWidth="1.5"
+        filter="url(#glow)"
+      />
+      
+      {/* Lock shackle - curved top part */}
+      <path
+        d="M 140 155 L 140 145 C 140 139 144.5 134 150 134 C 155.5 134 160 139 160 145 L 160 155"
+        stroke="#00FFFF"
+        strokeWidth="3"
+        fill="none"
+        strokeLinecap="round"
+        filter="url(#glow)"
+      />
+      
+      {/* Keyhole */}
+      <circle cx="150" cy="164" r="3" fill="#001a33" />
+      <path d="M 150 167 L 148 174 L 152 174 Z" fill="#001a33" />
+      
+      {/* Decorative elements on lock */}
+      <line x1="138" y1="158" x2="138" y2="177" stroke="#00FFFF" strokeWidth="0.5" opacity="0.5" />
+      <line x1="162" y1="158" x2="162" y2="177" stroke="#00FFFF" strokeWidth="0.5" opacity="0.5" />
+    </svg>
+  );
+}

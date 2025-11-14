@@ -34,7 +34,7 @@ class ConversationStage(str, Enum):
 
 
 class ComplaintField(str, Enum):
-    """Complaint collection fields - TO BE UPDATED per PS2.pdf requirements"""
+    """Complaint collection fields - PS2.pdf compliant with all 13 mandatory reporter fields"""
     FRAUD_TYPE = "fraud_type"
     INCIDENT_DESCRIPTION = "incident_description"
     INCIDENT_DATE = "incident_date"
@@ -43,8 +43,16 @@ class ComplaintField(str, Enum):
     SUSPECT_INFO = "suspect_info"
     SUSPECT_CONTACT = "suspect_contact"
     VICTIM_NAME = "victim_name"
+    GUARDIAN_NAME = "guardian_name"
+    DOB = "dob"
     VICTIM_PHONE = "victim_phone"
     VICTIM_EMAIL = "victim_email"
+    GENDER = "gender"
+    VILLAGE = "village"
+    POST_OFFICE = "post_office"
+    POLICE_STATION = "police_station"
+    DISTRICT = "district"
+    PIN_CODE = "pin_code"
     LOCATION = "location"
     POLICE_REPORT_FILED = "police_report_filed"
     ADDITIONAL_INFO = "additional_info"
@@ -235,8 +243,16 @@ class WhatsAppConversationHandler:
             ComplaintField.SUSPECT_INFO,
             ComplaintField.SUSPECT_CONTACT,
             ComplaintField.VICTIM_NAME,
+            ComplaintField.GUARDIAN_NAME,
+            ComplaintField.DOB,
+            ComplaintField.GENDER,
             ComplaintField.VICTIM_PHONE,
             ComplaintField.VICTIM_EMAIL,
+            ComplaintField.VILLAGE,
+            ComplaintField.POST_OFFICE,
+            ComplaintField.POLICE_STATION,
+            ComplaintField.DISTRICT,
+            ComplaintField.PIN_CODE,
             ComplaintField.LOCATION,
             ComplaintField.POLICE_REPORT_FILED,
             ComplaintField.ADDITIONAL_INFO
@@ -291,6 +307,39 @@ class WhatsAppConversationHandler:
         elif current_field == ComplaintField.VICTIM_NAME:
             self.conversation_state.set_field(user_id, current_field, message_text)
             self.conversation_state.update_state(user_id, {
+                "current_field": ComplaintField.GUARDIAN_NAME
+            })
+            return {"text": "👨‍👩‍👧 Please provide your Father's/Spouse's/Guardian's name:"}
+        
+        elif current_field == ComplaintField.GUARDIAN_NAME:
+            self.conversation_state.set_field(user_id, current_field, message_text)
+            self.conversation_state.update_state(user_id, {
+                "current_field": ComplaintField.DOB
+            })
+            return {"text": "📅 Please provide your Date of Birth (DD/MM/YYYY):"}
+        
+        elif current_field == ComplaintField.DOB:
+            is_valid, normalized_dob = validation_service.is_valid_dob(message_text)
+            if not is_valid:
+                return {"text": "❌ Invalid date format. Please enter your date of birth in DD/MM/YYYY format (e.g., 15/08/1990)"}
+            
+            self.conversation_state.set_field(user_id, current_field, normalized_dob)
+            self.conversation_state.update_state(user_id, {
+                "current_field": ComplaintField.GENDER
+            })
+            return {
+                "text": "⚧ Please select your gender:",
+                "buttons": [
+                    {"id": "male", "title": "Male"},
+                    {"id": "female", "title": "Female"},
+                    {"id": "other", "title": "Other"},
+                    {"id": "prefer_not_to_say", "title": "Prefer not to say"}
+                ]
+            }
+        
+        elif current_field == ComplaintField.GENDER:
+            self.conversation_state.set_field(user_id, current_field, message_text)
+            self.conversation_state.update_state(user_id, {
                 "current_field": ComplaintField.VICTIM_PHONE
             })
             return {"text": "📱 Please provide your mobile number (10 digits):"}
@@ -308,6 +357,44 @@ class WhatsAppConversationHandler:
         elif current_field == ComplaintField.VICTIM_EMAIL:
             if not validation_service.is_valid_email(message_text):
                 return {"text": "❌ Invalid email address. Please enter a valid email (e.g., user@example.com)"}
+            
+            self.conversation_state.set_field(user_id, current_field, message_text)
+            self.conversation_state.update_state(user_id, {
+                "current_field": ComplaintField.VILLAGE
+            })
+            return {"text": "🏘️ Please provide your Village/Town name:"}
+        
+        elif current_field == ComplaintField.VILLAGE:
+            self.conversation_state.set_field(user_id, current_field, message_text)
+            self.conversation_state.update_state(user_id, {
+                "current_field": ComplaintField.POST_OFFICE
+            })
+            return {"text": "📮 Please provide your Post Office name:"}
+        
+        elif current_field == ComplaintField.POST_OFFICE:
+            self.conversation_state.set_field(user_id, current_field, message_text)
+            self.conversation_state.update_state(user_id, {
+                "current_field": ComplaintField.POLICE_STATION
+            })
+            return {"text": "🚓 Please provide your Police Station name:"}
+        
+        elif current_field == ComplaintField.POLICE_STATION:
+            self.conversation_state.set_field(user_id, current_field, message_text)
+            self.conversation_state.update_state(user_id, {
+                "current_field": ComplaintField.DISTRICT
+            })
+            return {"text": "🏛️ Please provide your District name:"}
+        
+        elif current_field == ComplaintField.DISTRICT:
+            self.conversation_state.set_field(user_id, current_field, message_text)
+            self.conversation_state.update_state(user_id, {
+                "current_field": ComplaintField.PIN_CODE
+            })
+            return {"text": "📍 Please provide your PIN code (6 digits):"}
+        
+        elif current_field == ComplaintField.PIN_CODE:
+            if not validation_service.is_valid_pin(message_text):
+                return {"text": "❌ Invalid PIN code. Please enter a valid 6-digit PIN code (cannot start with 0)."}
             
             self.conversation_state.set_field(user_id, current_field, message_text)
             self.conversation_state.update_state(user_id, {
