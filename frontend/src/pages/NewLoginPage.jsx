@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Shield, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import { authService } from '../services/auth';
 import Loader from '../components/ui/Loader';
@@ -174,6 +174,12 @@ export default function NewLoginPage() {
 
             <div className="mt-6 pt-6 border-t border-gray-200">
               <p className="text-center text-sm text-gray-600">
+                Don't have an account?{' '}
+                <Link to="/signup" className="font-medium text-primary-600 hover:text-primary-700">
+                  Sign up here
+                </Link>
+              </p>
+              <p className="text-center text-sm text-gray-600 mt-2">
                 Having trouble signing in?{' '}
                 <a href="#" className="font-medium text-primary-600 hover:text-primary-700">
                   Contact Support
