@@ -1,4 +1,4 @@
-modules = ["python-3.12", "nodejs-20", "bash", "web"]
+modules = ["python-3.12", "nodejs-20", "bash"]
 [agent]
 expertMode = true
 
@@ -58,3 +58,7 @@ exposeLocalhost = true
 [[ports]]
 localPort = 37197
 externalPort = 3000
+
+[[ports]]
+localPort = 43729
+externalPort = 3001
