@@ -20,10 +20,65 @@ export default function SignupPage() {
     setError('');
 
     try {
+      // Validate form data before submission
+      if (!formData.email || !formData.password || !formData.full_name || !formData.phone) {
+        setError('Please fill in all required fields');
+        setLoading(false);
+        return;
+      }
+
+      if (formData.password.length < 8) {
+        setError('Password must be at least 8 characters long');
+        setLoading(false);
+        return;
+      }
+
+      // Check if backend is reachable before attempting registration
+      try {
+        const healthCheck = await fetch('/health');
+        if (!healthCheck.ok) {
+          throw new Error('Backend health check failed');
+        }
+      } catch (healthErr) {
+        setError('Backend server is not running. Please start the backend server on port 8000 and try again.');
+        setLoading(false);
+        return;
+      }
+
       await authService.register(formData);
       navigate('/login');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Registration failed. Please try again.');
+      // Extract error message from response
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      console.error('Registration error:', err);
+      console.error('Error response:', err.response);
+      
+      if (err.response) {
+        // Server responded with error
+        if (err.response.data?.detail) {
+          errorMessage = err.response.data.detail;
+        } else if (err.response.data?.message) {
+          errorMessage = err.response.data.message;
+        } else if (err.response.status === 500) {
+          errorMessage = err.response.data?.detail || 'Server error. Please try again or contact support.';
+        } else if (err.response.status === 400) {
+          errorMessage = err.response.data?.detail || 'Invalid data. Please check your input.';
+        } else if (err.response.status === 422) {
+          errorMessage = err.response.data?.detail || 'Validation error. Please check your input.';
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      // Handle network errors
+      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        errorMessage = 'Request timed out. Please check your connection and try again.';
+      } else if (err.message?.includes('Network Error') || !err.response) {
+        errorMessage = 'Unable to connect to server. Please check if the backend is running on http://localhost:8000';
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

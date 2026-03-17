@@ -141,25 +141,64 @@ class AuthService:
     @staticmethod
     async def create_user(
         email: str,
-        password: str,
+        password: Optional[str],
         full_name: str,
-        phone: str,
+        phone: Optional[str] = None,
         role: UserRole = UserRole.VIEWER,
         department: Optional[str] = None,
         created_by: Optional[str] = None,
     ) -> UserDocument:
         """Create a new user."""
+        import json
+        from datetime import datetime
+        
+        # #region agent log
+        try:
+            with open(r'd:\cybersathi\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A,B","location":"auth.py:142","message":"create_user entry","data":{"email":email,"has_password":bool(password),"full_name":full_name},"timestamp":int(datetime.now().timestamp()*1000)}) + '\n')
+        except: pass
+        # #endregion
+        
         try:
             # Check if user already exists
+            # #region agent log
+            try:
+                with open(r'd:\cybersathi\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                    f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"auth.py:154","message":"before find_one check","data":{"email":email},"timestamp":int(datetime.now().timestamp()*1000)}) + '\n')
+            except: pass
+            # #endregion
+            
             existing_user = await UserDocument.find_one(UserDocument.email == email)
+            
+            # #region agent log
+            try:
+                with open(r'd:\cybersathi\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                    f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"auth.py:155","message":"after find_one check","data":{"existing_user_found":existing_user is not None},"timestamp":int(datetime.now().timestamp()*1000)}) + '\n')
+            except: pass
+            # #endregion
+            
             if existing_user:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="User with this email already exists"
                 )
             
-            # Hash password
-            hashed_password = AuthService.hash_password(password)
+            # Hash password if provided (for local registration)
+            hashed_password = None
+            if password:
+                if len(password) < settings.MIN_PASSWORD_LENGTH:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Password must be at least {settings.MIN_PASSWORD_LENGTH} characters"
+                    )
+                hashed_password = AuthService.hash_password(password)
+            
+            # #region agent log
+            try:
+                with open(r'd:\cybersathi\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                    f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"B","location":"auth.py:172","message":"before UserDocument creation","data":{"has_hashed_password":hashed_password is not None},"timestamp":int(datetime.now().timestamp()*1000)}) + '\n')
+            except: pass
+            # #endregion
             
             # Create user
             user = UserDocument(
@@ -170,23 +209,91 @@ class AuthService:
                 role=role,
                 department=department,
                 created_by=created_by,
+                provider="local",  # Explicitly set provider for local registration
+                status=UserStatus.ACTIVE,  # Explicitly set status
             )
             
-            await user.insert()
+            # #region agent log
+            try:
+                with open(r'd:\cybersathi\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                    f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"B","location":"auth.py:182","message":"after UserDocument creation","data":{"user_created":True,"has_id":hasattr(user,'id')},"timestamp":int(datetime.now().timestamp()*1000)}) + '\n')
+            except: pass
+            # #endregion
             
-            # Log user creation
-            await AuditLogDocument.log(
-                action=AuditAction.USER_CREATED,
-                resource_type="user",
-                user_id=created_by,
-                resource_id=str(user.id),
-                description=f"Created user: {email}",
-            )
+            # Insert user into database
+            try:
+                # #region agent log
+                try:
+                    from app.database import db
+                    with open(r'd:\cybersathi\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                        f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"auth.py:186","message":"before insert call","data":{"using_mock":db.using_mock if hasattr(db,'using_mock') else None,"has_client":db.client is not None if hasattr(db,'client') else None},"timestamp":int(datetime.now().timestamp()*1000)}) + '\n')
+                except: pass
+                # #endregion
+                
+                await user.insert()
+                
+                # #region agent log
+                try:
+                    # Verify user was actually saved by querying it back
+                    from app.database import db
+                    # UserDocument is already imported at top of file
+                    saved_user = await UserDocument.find_one(UserDocument.email == email)
+                    with open(r'd:\cybersathi\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                        f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"auth.py:187","message":"after insert success","data":{"user_id":str(user.id) if hasattr(user,'id') else None,"saved_user_found":saved_user is not None,"saved_user_id":str(saved_user.id) if saved_user and hasattr(saved_user,'id') else None,"using_mock":db.using_mock if hasattr(db,'using_mock') else None},"timestamp":int(datetime.now().timestamp()*1000)}) + '\n')
+                except: pass
+                # #endregion
+                
+            except Exception as insert_error:
+                # #region agent log
+                try:
+                    with open(r'd:\cybersathi\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                        f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"auth.py:188","message":"insert error caught","data":{"error_type":type(insert_error).__name__,"error_msg":str(insert_error)},"timestamp":int(datetime.now().timestamp()*1000)}) + '\n')
+                except: pass
+                # #endregion
+                
+                error_msg = str(insert_error)
+                # Check for duplicate email error
+                if "duplicate" in error_msg.lower() or "E11000" in error_msg:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="User with this email already exists"
+                    )
+                # Re-raise with more context
+                raise Exception(f"Failed to insert user into database: {error_msg}") from insert_error
+            
+            # Log user creation (non-blocking - don't fail registration if audit log fails)
+            try:
+                await AuditLogDocument.log(
+                    action=AuditAction.USER_CREATED,
+                    resource_type="user",
+                    user_id=created_by,
+                    resource_id=str(user.id),
+                    description=f"Created user: {email}",
+                )
+            except Exception as log_error:
+                # Log the error but don't fail user creation
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Failed to create audit log for user creation: {log_error}")
+            
+            # #region agent log
+            try:
+                with open(r'd:\cybersathi\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                    f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A,B","location":"auth.py:213","message":"create_user returning","data":{"user_id":str(user.id) if hasattr(user,'id') else None},"timestamp":int(datetime.now().timestamp()*1000)}) + '\n')
+            except: pass
+            # #endregion
             
             return user
         except HTTPException:
             raise
         except Exception as e:
+            # #region agent log
+            try:
+                with open(r'd:\cybersathi\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                    f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"D","location":"auth.py:217","message":"exception in create_user","data":{"error_type":type(e).__name__,"error_msg":str(e)},"timestamp":int(datetime.now().timestamp()*1000)}) + '\n')
+            except: pass
+            # #endregion
+            
             error_msg = str(e)
             if "ServerSelectionTimeoutError" in error_msg or "Connection" in error_msg:
                 raise HTTPException(
